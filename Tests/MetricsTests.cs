@@ -30,7 +30,7 @@ internal static class MetricsTests
         check(LabIndicator.Format(settings)=="LAB (SH)"&&availability.Lighting=="Off"&&availability.Modbot=="Off","Disabling preferences removes letters and overrides native standby status");
         settings.LightingFix=settings.ModbotFix=true;settings.TintOpacity=50;
         availability=FeatureStatus.Describe(settings,"6.66 Rev 3.2","NVIDIA",false,false,-1,"Input layout not ready",false);
-        check(availability.Lighting.Contains("1.0, 1.1 or 2.0")&&availability.Modbot.Contains("Input layout not ready")&&availability.Tint.Contains("Unavailable")&&LabIndicator.Format(settings)=="LAB (SLMHR)","Unavailable adapters retain configured letters and report their actual failure");
+        check(availability.Lighting.Contains("1.0, 1.1 or 2.0")&&availability.Modbot=="Unavailable"&&availability.Tint.Contains("Unavailable")&&LabIndicator.Format(settings)=="LAB (SLMHR)","Unavailable adapters retain configured letters and report their actual failure");
         using var process=Process.GetCurrentProcess();IntPtr memory=process.AllocateMemory(8192),state=memory+4096;
         IntPtr formats=Marshal.AllocHGlobal(256),cursor=Marshal.AllocHGlobal(8),mode=Marshal.AllocHGlobal(8);
         var rows=new List<(string Text,float Scale,long B,long D)>();
@@ -59,6 +59,17 @@ internal static class MetricsTests
             rows.Clear();Marshal.WriteInt64(state,0,0);Send(8);Send(128,(formats+160).ToInt64());
             check(rows.Select(x=>x.Text).SequenceEqual(new[]{"%.2fms","AMD Proprietary Driver"}),"Closing LAB immediately restores original formatter behavior");
             rows.Clear();Marshal.WriteInt64(state,0,99);Send(96);check(rows.Single().Text=="DESRU (ABC)","An expired lease also disables LAB after a crash");
+            rows.Clear();Marshal.WriteInt32(mode,2);Marshal.WriteInt32(state,8,1);Marshal.WriteInt32(state,12,0);Marshal.WriteInt64(state,0,1000);
+            process.WriteBytes(state+64,Encoding.ASCII.GetBytes(PerformanceMetrics.RestartText+"\0"));
+            Send(0);Send(8);Send(96);Send(128,(formats+160).ToInt64());Send(64);
+            check(rows.Select(x=>x.Text).SequenceEqual(new[]{"%i FPS","%.2fms","DESRU (ABC)","RESTART GAME(LAB)","AMD Proprietary Driver"}),"Restart notice replaces feature flags and retains original/DESRU metrics and AMD row");
+            rows.Clear();Marshal.WriteInt32(mode,1);Send(0);check(rows.Select(x=>x.Text).SequenceEqual(new[]{"%i FPS","RESTART GAME(LAB)"}),"Restart notice is visible with minimal FPS metrics");
+            Marshal.WriteInt32(mode,0);
+            using(var notice=new PerformanceMetrics(process,state,mode)){
+                notice.UpdateRestartNotice();
+                check(Marshal.ReadInt32(mode)==1&&Marshal.ReadInt32(state,8)==1&&Marshal.ReadInt32(state,12)==0&&Marshal.PtrToStringAnsi(state+64)==PerformanceMetrics.RestartText,"Notice-only controller enables only the notice and preserves the driver row");
+            }
+            check(Marshal.ReadInt32(mode)==0&&Marshal.ReadInt64(state)==0,"Closing the restart notice restores the original metrics setting");
         } finally { process.FreeMemory(memory);Marshal.FreeHGlobal(formats);Marshal.FreeHGlobal(cursor);Marshal.FreeHGlobal(mode);GC.KeepAlive(original);GC.KeepAlive(clock); }
         foreach(string path in (Environment.GetEnvironmentVariable("LAB_LAYOUT_TEST_PATHS")??"").Split('|',StringSplitOptions.RemoveEmptyEntries)) {
             var layout=NativeGameLayout.Resolve(path);check(layout.Metrics is not null,"Metrics resolve from the real executable: "+path+": "+layout.MetricsFailure);

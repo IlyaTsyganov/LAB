@@ -6,9 +6,11 @@ LAB is a focused DOOM Eternal utility with a UAC Frost interface, the original r
 
 ## Run
 
-Extract the complete archive and open `lab.exe`. Windows x64, .NET 10 Desktop Runtime and Microsoft Edge WebView2 Runtime are required. Choose `DOOMEternalx64vk.exe`, set preferences, then click **Launch game**. LAB can also connect to an already running copy whose full executable path matches the selected path.
+Extract the complete archive and open `LAB.exe`. Windows x64, .NET 10 Desktop Runtime and Microsoft Edge WebView2 Runtime are required. Choose `DOOMEternalx64vk.exe`, set preferences, then click **Launch game**. LAB can reconnect to a running game previously launched through LAB. If the selected game was already running outside LAB before LAB started, the UI displays **Restart game**, the in-game indicator becomes `RESTART GAME(LAB)`, and normal LAB features remain off until restart.
 
-Keep LAB open for live HUD updates, console settings, tint control and Q/E protection. Preferences are saved in `%LOCALAPPDATA%\lab\settings.json`, independently of LAB Plus. `LAB_DATA_DIRECTORY` may override this with an absolute directory. Logs are written to `logs/lab.log` next to `lab.exe`. Changing the settings directory does not relocate logs.
+The status line uses only **Game not running**, **Running <version>** and **Restart game**; technical connection details are logged. **Launch game** disables immediately on click, remains disabled while the selected process is running, and becomes available again after a failed launch or game exit.
+
+Keep LAB open for live HUD updates, console settings, tint control and Q/E protection. Preferences are saved in `%LOCALAPPDATA%\lab\settings.json`, independently of LAB Plus. `LAB_DATA_DIRECTORY` may override this with an absolute directory. Logs are written to `logs/lab.log` next to `LAB.exe`. Changing the settings directory does not relocate logs.
 
 ## First-run defaults
 
@@ -75,8 +77,8 @@ See [CREDITS.md](CREDITS.md), `LICENSE` and `Assets/licenses` for attribution.
 
 Run `pwsh -File build.ps1 -Test` from the repository root with the .NET 10 SDK, PowerShell 7 and either Visual Studio C++ build tools or LLVM-MinGW. The build discovers the installed compiler; Vulkan headers are included under `third_party`.
 
-The script builds the lighting DLL and application, executes the native fixtures, and produces `artifacts/lab-1.0-win-x64.zip` plus its SHA-256 file. CPU-only CI may add `-SkipVulkanProbe`; this still runs lighting math and ownership tests. The local runtime package is `artifacts/package-1.0`.
+The script builds the lighting DLL and application, executes the native fixtures, and produces `artifacts/LAB.zip` plus its SHA-256 file. Extracting the ZIP creates one `LAB` folder; launch `LAB/LAB.exe`. CPU-only CI may add `-SkipVulkanProbe`; this still runs lighting math and ownership tests. The local runtime package is `artifacts/package-1.0.1/LAB`.
 
 Packaging uses an explicit file list and validates the ZIP contents. The program archive includes runtime files, UI assets and component licenses. README.md, CREDITS.md, debug symbols, settings, populated logs, developer tools, source and documentation screenshots are excluded. Attribution remains available under `Assets/licenses` and in the repository.
 
-`lab.exe --preview` starts an isolated design preview. `--qa-output <absolute-directory>` also checks UI controls, persistence, all window presets and Compact without scrolling, then closes. Run UI QA in the normal Windows user session.
+`LAB.exe --preview` starts an isolated design preview. `--qa-output <absolute-directory>` also checks UI controls, persistence, all window presets and Compact without scrolling, then closes. Run UI QA in the normal Windows user session.

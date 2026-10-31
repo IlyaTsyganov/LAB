@@ -12,7 +12,7 @@ internal sealed class LabHost:Form
     internal LabHost(SettingsStore store,bool preview,string[] args)
     {
         _store=store;_preview=preview;_args=args;FormBorderStyle=FormBorderStyle.None;BackColor=Color.FromArgb(17,27,34);Text="LAB";Opacity=0;StartPosition=FormStartPosition.CenterScreen;
-        Rectangle area=Screen.PrimaryScreen!.WorkingArea;ClientSize=new(Math.Min(820,area.Width-40),Math.Min(800,area.Height-40));MinimumSize=new(680,580);Icon=new(Path.Combine(AppContext.BaseDirectory,"Assets/lab.ico"));Controls.Add(_browser);GameLauncher.WriteLightingControl(store);_monitor=new(store,preview);_monitor.Updated+=(changed,status)=>{if(!IsDisposed&&!_closing&&IsHandleCreated)BeginInvoke(()=>Publish(changed?"Console setting saved":""));};
+        Rectangle area=Screen.PrimaryScreen!.WorkingArea;ClientSize=new(Math.Min(820,area.Width-40),Math.Min(800,area.Height-40));MinimumSize=new(680,580);Icon=new(Path.Combine(AppContext.BaseDirectory,"Assets/lab.ico"));Controls.Add(_browser);GameLauncher.WriteLightingControl(store,false);_monitor=new(store,preview);_monitor.Updated+=(changed,status)=>{if(!IsDisposed&&!_closing&&IsHandleCreated)BeginInvoke(()=>Publish(changed?"Console setting saved":""));};
     }
     protected override async void OnShown(EventArgs e)
     {
@@ -30,16 +30,16 @@ internal sealed class LabHost:Form
         }catch(Exception ex){if(_closing)return;StartupError=true;Log.Error(ex,"Interface initialization failed");Close();}
     }
     private void Publish(string feedback="")
-    {if(_browser.CoreWebView2 is null||!_ready.Task.IsCompletedSuccessfully)return;_browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new{kind="config",settings=_store.Snapshot(),connected=_monitor.Connected,status=_monitor.Status,featureStatus=_monitor.Features,feedback},SettingsStore.Json));}
+    {if(_browser.CoreWebView2 is null||!_ready.Task.IsCompletedSuccessfully)return;_browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new{kind="config",settings=_store.Snapshot(),connected=_monitor.Connected,launchPending=_monitor.LaunchPending,status=_monitor.Status,featureStatus=_monitor.Features,feedback},SettingsStore.Json));}
     private void Notice(string title,string text)=>_browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new{kind="notice",title,text},SettingsStore.Json));
     private void Receive(object? sender,CoreWebView2WebMessageReceivedEventArgs e)
     {
         if(!e.Source.StartsWith("https://app.lab.local/",StringComparison.Ordinal))return;
         try{using var json=JsonDocument.Parse(e.WebMessageAsJson);var d=json.RootElement;switch(d.GetProperty("kind").GetString()){
             case "ready":_ready.TrySetResult();break;
-            case "setting":if(!_store.Apply(d.GetProperty("key").GetString()??"",d.GetProperty("value")))throw new ArgumentException("The setting value is invalid.");GameLauncher.WriteLightingControl(_store);Publish("Preference saved");break;
+            case "setting":if(!_store.Apply(d.GetProperty("key").GetString()??"",d.GetProperty("value")))throw new ArgumentException("The setting value is invalid.");GameLauncher.WriteLightingControl(_store,_monitor.CanApplyFeatures);Publish("Preference saved");break;
             case "browse":BeginInvoke(()=>{using var picker=new OpenFileDialog{Title="Select DOOM Eternal",Filter="DOOM Eternal|DOOMEternalx64vk.exe",CheckFileExists=true,FileName="DOOMEternalx64vk.exe"};if(picker.ShowDialog(this)==DialogResult.OK){_store.Update(s=>{s.GamePath=picker.FileName;return true;});Publish("Game executable selected");}});break;
-            case "launch":BeginInvoke(()=>{try{if(_preview){Notice("Preview mode","Game launch is disabled in preview mode.");return;}if(_monitor.Connected){Notice("Game running","The selected game is already running.");return;}GameLauncher.Start(_store);Publish("Game launch requested");}catch(Exception ex){Notice("Could not launch game",ex.Message);}});break;
+            case "launch":if(_preview){Notice("Preview mode","Game launch is disabled in preview mode.");Publish();break;}if(!_monitor.TryBeginLaunch()){Publish();break;}Publish("Game launch requested");BeginInvoke(()=>{try{GameLauncher.Start(_store);}catch(Exception ex){_monitor.CancelLaunch();Log.Warning(ex,"Game launch");try{GameLauncher.WriteLightingControl(_store,_monitor.CanApplyFeatures);}catch(Exception controlError){Log.Warning(controlError,"Lighting control");}Notice("Could not launch game","Check the selected executable and try again.");Publish();}});break;
             case "window":string? action=d.GetProperty("action").GetString();BeginInvoke(()=>{switch(action){case "minimize":WindowState=FormWindowState.Minimized;break;case "maximize":WindowState=WindowState==FormWindowState.Maximized?FormWindowState.Normal:FormWindowState.Maximized;break;case "compact":SetWindowSize(820,800);break;case "mini":SetWindowSize(680,580);break;case "comfortable":SetWindowSize(920,860);break;case "close":Close();break;}});break;
         }}catch(Exception ex){Log.Warning(ex,"Interface action failed");Notice("LAB",ex.Message);}
     }
@@ -67,8 +67,17 @@ internal sealed class LabHost:Form
         await core.ExecuteScriptAsync("document.querySelector('[data-help]').click()");await Task.Delay(80);using(var file=File.Create(Path.Combine(directory,"help.png")))await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,file);
         await core.ExecuteScriptAsync("document.querySelector('[data-help-tab=commands]').click()");await Task.Delay(80);string helpCheck=await core.ExecuteScriptAsync("!document.querySelector('[data-help-panel=commands]').hidden&&document.querySelector('[data-help-panel=indicators]').hidden&&document.querySelector('[data-help-tab=commands]').getAttribute('aria-selected')==='true'");if(helpCheck!="true")throw new Exception("Help tabs did not switch");using(var file=File.Create(Path.Combine(directory,"help-commands.png")))await core.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,file);await core.ExecuteScriptAsync("document.querySelector('[data-close-help]').click()");
         await core.ExecuteScriptAsync("document.querySelector('[data-window=maximize]').click()");await Task.Delay(150);bool maximized=WindowState==FormWindowState.Maximized;await core.ExecuteScriptAsync("document.querySelector('[data-window=maximize]').click()");await Task.Delay(150);bool restored=WindowState==FormWindowState.Normal;if(!maximized||!restored)throw new Exception("Window maximize/restore failed.");
+        string originalGamePath=_store.Snapshot().GamePath;
+        _store.Update(s=>{s.GamePath=Path.Combine(directory,"DOOMEternalx64vk.exe");return true;});Publish();await Task.Delay(100);
+        string clickDisabled=await core.ExecuteScriptAsync("(()=>{const button=document.querySelector('[data-launch]');button.click();return button.disabled;})()");
+        if(clickDisabled!="true")throw new Exception("Launch button did not disable in the click handler");
+        await Task.Delay(200);
+        if(_monitor.LaunchPending||await core.ExecuteScriptAsync("document.querySelector('[data-launch]').disabled")!="false")throw new Exception("Refused preview launch did not restore the button");
+        await core.ExecuteScriptAsync("document.querySelector('[data-notice-close]').click()");
+        _store.Update(s=>{s.GamePath=originalGamePath;return true;});Publish();await Task.Delay(100);
+        if(await core.ExecuteScriptAsync("document.querySelector('.lab-status').textContent")!="\"Game not running\"")throw new Exception("The status line exposed a non-user status");
         var originalSize=ClientSize;ClientSize=new(680,580);await Task.Delay(100);ClientSize=originalSize;
-        File.WriteAllText(Path.Combine(directory,"host-report.json"),JsonSerializer.Serialize(new{firstFrameReady=_ready.Task.IsCompletedSuccessfully,nativeChildren=Controls.Count,nativeChildType=Controls[0].GetType().Name,independentSizesPersisted=true,colorPersisted=true,verticalSignPersisted=true,compactNoScroll=true,maximized,restored},SettingsStore.Json));Close();
+        File.WriteAllText(Path.Combine(directory,"host-report.json"),JsonSerializer.Serialize(new{firstFrameReady=_ready.Task.IsCompletedSuccessfully,nativeChildren=Controls.Count,nativeChildType=Controls[0].GetType().Name,independentSizesPersisted=true,colorPersisted=true,verticalSignPersisted=true,compactNoScroll=true,launchClickImmediate=true,launchRefusalRestoresButton=true,maximized,restored},SettingsStore.Json));Close();
     }
     protected override void OnFormClosing(FormClosingEventArgs e){_closing=true;_ready.TrySetCanceled();try{_monitor.Dispose();}finally{GameLauncher.WriteLightingControl(_store,false);}base.OnFormClosing(e);}
     protected override void WndProc(ref Message m)

@@ -2,7 +2,7 @@ param([switch]$Test,[switch]$SkipVulkanProbe)
 $ErrorActionPreference='Stop'
 $root=$PSScriptRoot
 $workspace=Split-Path -Parent $root
-$version='1.0'
+$version=([xml](Get-Content -LiteralPath (Join-Path $root 'lab.csproj') -Raw)).Project.PropertyGroup.Version
 $sdk=Join-Path $workspace '.tools/dotnet/dotnet.exe'
 if(!(Test-Path -LiteralPath $sdk)){$sdk='dotnet'}
 $env:DOTNET_CLI_UI_LANGUAGE='en'
@@ -50,9 +50,11 @@ try{
     New-Item -ItemType Directory -Path '.tools/native-build','Tests/output','artifacts' -Force | Out-Null
     Build-Native 'Native/Lighting/lab_lighting.cpp' 'Native/Lighting/lab-lighting.dll' -Shared
     $publish=Join-Path $root ('artifacts/publish-'+$version)
-    $package=Join-Path $root ('artifacts/package-'+$version)
+    $packageRoot=Join-Path $root ('artifacts/package-'+$version)
+    $package=Join-Path $packageRoot 'LAB'
     Reset-BuildDirectory $publish
-    Reset-BuildDirectory $package
+    Reset-BuildDirectory $packageRoot
+    New-Item -ItemType Directory -Path $package -Force | Out-Null
     & $sdk publish lab.csproj -c Release -o $publish --nologo -p:NuGetAudit=false -p:DebugType=None -p:DebugSymbols=false -v:q
     if($LASTEXITCODE){throw 'LAB publish failed'}
     if($Test){
@@ -65,29 +67,32 @@ try{
         $previousPath=$env:VK_LAYER_PATH;$previousFix=$env:LAB_LIGHTING_FIX
         try{$env:VK_LAYER_PATH=(Get-Content -LiteralPath Tests/output/lighting-path.txt -Raw).Trim();$env:LAB_LIGHTING_FIX='1';if($SkipVulkanProbe){& ./Tests/output/lighting-probe.exe --math-only}else{& ./Tests/output/lighting-probe.exe};if($LASTEXITCODE){throw 'Lighting loader checks failed'}}finally{$env:VK_LAYER_PATH=$previousPath;$env:LAB_LIGHTING_FIX=$previousFix}
     }
-    foreach($name in @('lab.exe','lab.dll','lab.deps.json','lab.runtimeconfig.json','Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','LICENSE')){
+    foreach($name in @('LAB.exe','LAB.dll','LAB.deps.json','LAB.runtimeconfig.json','Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','LICENSE')){
         Copy-Item -LiteralPath (Join-Path $publish $name) -Destination (Join-Path $package $name)
     }
     Copy-Item -LiteralPath (Join-Path $publish 'Assets') -Destination $package -Recurse
     New-Item -ItemType Directory -Path (Join-Path $package 'Native/Lighting'),(Join-Path $package 'runtimes/win-x64/native'),(Join-Path $package 'logs') -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $publish 'Native/Lighting/lab-lighting.dll') -Destination (Join-Path $package 'Native/Lighting/lab-lighting.dll')
     Copy-Item -LiteralPath (Join-Path $publish 'runtimes/win-x64/native/WebView2Loader.dll') -Destination (Join-Path $package 'runtimes/win-x64/native/WebView2Loader.dll')
-    $archive=Join-Path $root ('artifacts/lab-'+$version+'-win-x64.zip')
+    $archive=Join-Path $root 'artifacts/LAB.zip'
     if(Test-Path -LiteralPath $archive){Remove-Item -LiteralPath $archive -Force}
     Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [IO.Compression.ZipFile]::CreateFromDirectory($package,$archive)
+    [IO.Compression.ZipFile]::CreateFromDirectory($packageRoot,$archive)
     $zip=[IO.Compression.ZipFile]::OpenRead($archive)
     try{
         $names=@($zip.Entries | ForEach-Object {$_.FullName.Replace('\','/')})
         $files=@($names | Where-Object {!$_.EndsWith('/')})
-        $expected=@('lab.exe','lab.dll','lab.deps.json','lab.runtimeconfig.json','Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','LICENSE','Native/Lighting/lab-lighting.dll','runtimes/win-x64/native/WebView2Loader.dll')
+        $expected=@('LAB.exe','LAB.dll','LAB.deps.json','LAB.runtimeconfig.json','Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','LICENSE','Native/Lighting/lab-lighting.dll','runtimes/win-x64/native/WebView2Loader.dll')
         $expected+=@(Get-ChildItem -LiteralPath Assets -Recurse -File | ForEach-Object {[IO.Path]::GetRelativePath($root,$_.FullName).Replace('\','/')})
-        if(@(Compare-Object ($expected | Sort-Object) ($files | Sort-Object)).Count){throw 'Release archive contains missing or unexpected files.'}
+        $expected=@($expected | ForEach-Object {'LAB/'+$_})
+        if($names | Where-Object {!$_.StartsWith('LAB/',[StringComparison]::Ordinal)}){throw 'Release must contain only the LAB folder.'}
+        if(!($files -ccontains 'LAB/LAB.exe')){throw 'LAB.exe is missing or has the wrong case.'}
+        if(@(Compare-Object -CaseSensitive ($expected | Sort-Object) ($files | Sort-Object)).Count){throw 'Release archive contains missing or unexpected files.'}
         if($names -match '(^|/)(README\.md|CREDITS\.md|settings\.json|[^/]+\.pdb|[^/]+\.log)$'){throw 'Release contains documentation, user data or debug output.'}
         $names | Set-Content -LiteralPath ($archive+'.contents.txt') -Encoding utf8
     }finally{$zip.Dispose()}
     $digest=Get-FileHash -LiteralPath $archive -Algorithm SHA256
     [IO.File]::WriteAllText($archive+'.sha256',$digest.Hash.ToLowerInvariant()+'  '+[IO.Path]::GetFileName($archive)+[Environment]::NewLine)
-    Write-Output ('LAB is ready: '+(Join-Path $package 'lab.exe'))
+    Write-Output ('LAB is ready: '+(Join-Path $package 'LAB.exe'))
     Write-Output ('Verified release archive: '+$archive)
 }finally{Pop-Location}

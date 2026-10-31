@@ -12,7 +12,7 @@ internal static class Program
     private static void Check(bool condition,string description){if(!condition)throw new Exception(description);_checks++;}
     private static int Main(string[] args)
     {
-        try{if(args.Contains("--verify-live")||args.Contains("--verify-stopped"))return LiveGameChecks.Run(args.Contains("--verify-live"));Settings();Speeds();Driver();MetricsTests.Run(Check);NativeAdapterTests.Run(Check);ModbotInputTests.Run(Check);LowHealthTintTests.Run(Check);Console.WriteLine($"PASS: {_checks} checks, including executed x64 metrics, HUD, tint and Modbot fixtures.");return 0;}
+        try{if(args.Contains("--monitor-child")){Thread.Sleep(30000);return 0;}if(args.Contains("--verify-live")||args.Contains("--verify-stopped")||args.Contains("--verify-restart"))return LiveGameChecks.Run(!args.Contains("--verify-stopped"),args.Contains("--verify-restart"));Settings();Speeds();Driver();GameLifecycleTests.Run(Check);MetricsTests.Run(Check);NativeAdapterTests.Run(Check);ModbotInputTests.Run(Check);LowHealthTintTests.Run(Check);Console.WriteLine($"PASS: {_checks} checks, including executed x64 metrics, HUD, tint and Modbot fixtures.");return 0;}
         catch(Exception e){Console.Error.WriteLine(e);return 1;}
     }
     private static void Settings()

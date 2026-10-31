@@ -11,12 +11,12 @@ internal sealed class GameSession:IDisposable
     internal string Version {get;}
     internal int Pid=>_game.Id;
     internal bool Exited=>_game.HasExited;
-    internal GameSession(Process game)
+    internal GameSession(Process game,GameProfile? profile=null)
     {
-        _game=game;var p=GameProfile.Resolve(game.MainModule!.FileName);Version=p.Name;_reader=new(game,p);_hud=NativeSpeedometer.Attach(game);_sampler=new(game);
+        _game=game;var p=profile??GameProfile.Resolve(game.MainModule!.FileName);Version=p.Name;_reader=new(game,p);_hud=NativeSpeedometer.Attach(game);_sampler=new(game);
         try{if(p.Metrics==0)throw new NotSupportedException("Missing metrics profile");_metrics=PerformanceMetrics.Attach(game,_hud.Layout,p.Metrics);}catch(Exception e){Log.Warning(e,"Performance metrics unavailable");}
     }
-    internal (bool Changed,string Status) Tick(SettingsStore store)
+    internal bool Tick(SettingsStore store)
     {
         bool changed=false;foreach(var command in _hud.ReadCommands()){if(command.Arguments.Length==0)_hud.QueueConsoleMessage(ConsoleControls.Help(store.Snapshot(),command.Command));else{bool ok=store.Update(s=>ConsoleControls.Apply(s,command.Command,command.Arguments));changed|=ok;if(!ok)_hud.QueueConsoleMessage("Invalid value. "+ConsoleControls.Help(store.Snapshot(),command.Command));}}
         var settings=store.Snapshot();bool active=_reader.Active;IntPtr player=_reader.Player;bool enabled=settings.SpeedometersEnabled&&(settings.Current.Enabled||settings.Landing.Enabled||settings.Vertical.Enabled);
@@ -35,32 +35,168 @@ internal sealed class GameSession:IDisposable
         // conditions are reported separately in the UI instead of hiding letters.
         _metrics?.Update(settings);
         Features=FeatureStatus.Describe(settings,Version,_reader.DriverName,GameLauncher.LightingActive(_game.Id),_modbot is not null,maxHz,_modbotFailure,_hud.TintAttached);
-        return(changed,$"Connected · {Version} · PID {_game.Id} · HUD {(_hud.CommandsRegistered?"ready":"starting")}");
+        return changed;
     }
-    public void Dispose(){try{_modbot?.Dispose();}finally{try{_sampler.Dispose();}finally{try{_metrics?.Dispose();}finally{try{_hud.Dispose();}finally{_game.Dispose();}}}}}
+    public void Dispose(){try{_modbot?.Dispose();}finally{try{_sampler.Dispose();}finally{try{_metrics?.Dispose();}finally{_hud.Dispose();}}}}
     [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")]private static extern uint GetWindowThreadProcessId(IntPtr hwnd,out uint pid);
 }
 internal sealed class GameMonitor:IDisposable
 {
-    private readonly SettingsStore _store;private readonly CancellationTokenSource _stop=new();private readonly Task _worker;private readonly bool _preview;private int _disposed;
+    private readonly SettingsStore _store;
+    private readonly CancellationTokenSource _stop=new();
+    private readonly Task _worker;
+    private readonly bool _preview;
+    private readonly DateTime _startedUtc;
+    private readonly object _launchGate=new();
+    private bool _launchPending;
+    private long _launchDeadline;
+    private int _disposed;
     internal event Action<bool,string>? Updated;
-    internal string Status {get;private set;}="Game not running";
+    internal string Status {get;private set;}=GameStatus.NotRunning;
     internal bool Connected {get;private set;}
+    internal bool RequiresRestart {get;private set;}
+    internal bool CanApplyFeatures=>Connected&&!RequiresRestart;
+    internal bool LaunchPending {get{lock(_launchGate)return _launchPending;}}
     internal FeatureStatus? Features {get;private set;}
-    internal GameMonitor(SettingsStore store,bool preview){_store=store;_preview=preview;_worker=Task.Run(Run);}
+
+    internal GameMonitor(SettingsStore store,bool preview,DateTime? startedUtc=null)
+    {
+        _store=store;_preview=preview;
+        using var owner=Process.GetCurrentProcess();
+        _startedUtc=startedUtc??owner.StartTime.ToUniversalTime();
+        _worker=Task.Run(Run);
+    }
+    internal bool TryBeginLaunch()
+    {
+        lock(_launchGate){
+            if(Connected||_launchPending)return false;
+            _launchPending=true;_launchDeadline=Environment.TickCount64+60000;return true;
+        }
+    }
+    internal void CancelLaunch(){lock(_launchGate)_launchPending=false;}
+    private void ExpireLaunch(long now)
+    {
+        lock(_launchGate){
+            if(_launchPending&&now>=_launchDeadline){
+                _launchPending=false;Log.Warning("Game launch was not detected before the launch timeout");
+            }
+        }
+    }
+    private static bool Alive(Process game)
+    {
+        try{return !game.HasExited;}
+        catch(Exception e)when(e is InvalidOperationException or System.ComponentModel.Win32Exception){return false;}
+    }
+    private static void CloseAdapter<T>(ref T? adapter)where T:class,IDisposable
+    {
+        var previous=adapter;adapter=null;
+        try{previous?.Dispose();}
+        catch(Exception e){Log.Warning(e,"Game adapter cleanup");}
+    }
+    private static Process? FindGame(string selectedPath)
+    {
+        if(string.IsNullOrEmpty(selectedPath))return null;
+        foreach(var process in Process.GetProcessesByName("DOOMEternalx64vk")){
+            try{
+                if(Alive(process)&&process.MainModule?.FileName.Equals(selectedPath,StringComparison.OrdinalIgnoreCase)==true)
+                    return process;
+            }catch(Exception e)when(e is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException){
+                Log.Warning(e,"Game process discovery");
+            }
+            process.Dispose();
+        }
+        return null;
+    }
     private async Task Run()
     {
-        GameSession? session=null;string lastPath="";long retryAt=0;string lastStatus="";FeatureStatus? lastFeatures=null;
-        try{while(!_stop.IsCancellationRequested){bool changed=false;string path=_store.Snapshot().GamePath;
-            try{
-                if(session is not null&&(session.Exited||!path.Equals(lastPath,StringComparison.OrdinalIgnoreCase))){session.Dispose();session=null;retryAt=0;}
-                if(_preview){Status="Preview mode · no game connection";}
-                else if(session is null&&Environment.TickCount64>=retryAt){retryAt=Environment.TickCount64+3000;lastPath=path;Status=string.IsNullOrEmpty(path)?"Select the game executable":"Game not running";if(File.Exists(path))foreach(var p in Process.GetProcessesByName("DOOMEternalx64vk")){try{if(p.MainModule?.FileName.Equals(path,StringComparison.OrdinalIgnoreCase)==true){session=new GameSession(p);break;}p.Dispose();}catch{p.Dispose();throw;}}}
-                if(session is not null){var tick=session.Tick(_store);Status=tick.Status;changed=tick.Changed;}Connected=session is not null;Features=session?.Features;
-            }catch(Exception e){Log.Warning(e,"Game connection");session?.Dispose();session=null;Connected=false;Features=null;Status=e is NotSupportedException?e.Message:e is NativeGameNotReadyException?"Waiting for game initialization":$"Connection unavailable: {e.Message}";retryAt=Environment.TickCount64+5000;}
-            if(changed||Status!=lastStatus||Features!=lastFeatures){lastStatus=Status;lastFeatures=Features;Updated?.Invoke(changed,Status);}await Task.Delay(50,_stop.Token);
-        }}catch(OperationCanceledException){}finally{session?.Dispose();}
+        Process? game=null;GameSession? session=null;PerformanceMetrics? notice=null;GameProfile? profile=null;
+        string observedPath="",version="unknown",lastStatus="";
+        bool launchedByLab=false,preexisting=false,lastConnected=false,lastPending=false;
+        bool? lastGate=null;
+        long detectAt=0,attachAt=0,identityAt=0;
+        FeatureStatus? lastFeatures=null;
+        try{
+            while(!_stop.IsCancellationRequested){
+                bool changed=false;
+                try{
+                    long now=Environment.TickCount64;string selectedPath=_store.Snapshot().GamePath;
+                    ExpireLaunch(now);
+                    if(game is not null&&(!Alive(game)||!selectedPath.Equals(observedPath,StringComparison.OrdinalIgnoreCase))){
+                        CloseAdapter(ref session);CloseAdapter(ref notice);game.Dispose();game=null;profile=null;detectAt=0;attachAt=0;
+                    }
+                    if(!_preview&&game is null&&now>=detectAt){
+                        detectAt=now+1000;game=FindGame(selectedPath);
+                        if(game is not null){
+                            observedPath=selectedPath;version="unknown";profile=null;
+                            preexisting=game.StartTime.ToUniversalTime()<_startedUtc;
+                            launchedByLab=GameLauncher.WasLaunchedByLab(game,_store);identityAt=now+1000;
+                            try{profile=GameProfile.Resolve(observedPath);version=profile.Name;}
+                            catch(Exception e){Log.Warning(e,"Game version detection");}
+                        }
+                    }
+                    Connected=!_preview&&game is not null&&Alive(game);
+                    if(Connected){
+                        CancelLaunch();
+                        if(preexisting&&!launchedByLab&&now>=identityAt){
+                            identityAt=now+1000;launchedByLab=GameLauncher.WasLaunchedByLab(game!,_store);
+                        }
+                        RequiresRestart=preexisting&&!launchedByLab;
+                        if(RequiresRestart){
+                            CloseAdapter(ref session);
+                            if(lastGate!=false){GameLauncher.WriteLightingControl(_store,false);lastGate=false;}
+                            if(notice is null&&profile is not null&&now>=attachAt){
+                                attachAt=now+3000;
+                                try{
+                                    var layout=NativeGameLayout.Resolve(observedPath);
+                                    notice=PerformanceMetrics.Attach(game!,layout,profile.Metrics);
+                                }catch(Exception e){Log.Warning(e,"Restart notice initialization");}
+                            }
+                            if(notice is not null){
+                                try{notice.UpdateRestartNotice();}
+                                catch(Exception e){Log.Warning(e,"Restart notice");CloseAdapter(ref notice);attachAt=now+1000;}
+                            }
+                            Features=FeatureStatus.Restart;
+                        }else{
+                            CloseAdapter(ref notice);
+                            if(session is null&&profile is not null&&now>=attachAt){
+                                attachAt=now+3000;
+                                try{session=new GameSession(game!,profile);}
+                                catch(Exception e){Log.Warning(e,"Game adapter initialization");}
+                            }
+                            if(session is not null){
+                                try{changed=session.Tick(_store);}
+                                catch(Exception e){Log.Warning(e,"Game connection");CloseAdapter(ref session);attachAt=now+1000;}
+                            }
+                            Features=session?.Features??FeatureStatus.Pending(_store.Snapshot());
+                        }
+                        Connected=Alive(game!);
+                        Status=GameStatus.Format(Connected,version,preexisting,launchedByLab);
+                        if(!Connected){RequiresRestart=false;Features=null;}
+                    }else{RequiresRestart=false;Features=null;Status=GameStatus.NotRunning;}
+                    if(lastGate!=CanApplyFeatures){
+                        GameLauncher.WriteLightingControl(_store,CanApplyFeatures);lastGate=CanApplyFeatures;
+                    }
+                }catch(Exception e){
+                    Log.Warning(e,"Game monitoring");
+                    CloseAdapter(ref session);CloseAdapter(ref notice);game?.Dispose();game=null;profile=null;
+                    Connected=false;RequiresRestart=false;Features=null;Status=GameStatus.NotRunning;detectAt=Environment.TickCount64+1000;
+                    try{GameLauncher.WriteLightingControl(_store,false);lastGate=false;}
+                    catch(Exception controlError){Log.Warning(controlError,"Lighting control");}
+                }
+                bool pending=LaunchPending;
+                if(changed||Status!=lastStatus||Connected!=lastConnected||pending!=lastPending||Features!=lastFeatures){
+                    if(Status!=lastStatus)Log.Information("Game status",Status);
+                    lastStatus=Status;lastConnected=Connected;lastPending=pending;lastFeatures=Features;Updated?.Invoke(changed,Status);
+                }
+                await Task.Delay(50,_stop.Token);
+            }
+        }catch(OperationCanceledException){}
+        finally{CloseAdapter(ref session);CloseAdapter(ref notice);game?.Dispose();}
     }
-    public void Dispose(){if(Interlocked.Exchange(ref _disposed,1)!=0)return;_stop.Cancel();_worker.GetAwaiter().GetResult();_stop.Dispose();}
+    public void Dispose()
+    {
+        if(Interlocked.Exchange(ref _disposed,1)!=0)return;
+        _stop.Cancel();_worker.GetAwaiter().GetResult();_stop.Dispose();
+    }
 }

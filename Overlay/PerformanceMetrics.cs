@@ -23,13 +23,14 @@ internal static class LabIndicator
 internal sealed class PerformanceMetrics : IDisposable
 {
     internal const string Magic = "LABMET01";
+    internal const string RestartText = "RESTART GAME(LAB)";
     internal static readonly byte[] Prologue = Convert.FromHexString("4C8BDC5355565741564881EC70080000");
     private readonly Process _game;
     private readonly IntPtr _state, _mode;
-    private int? _savedMode;
+    private int? _savedMode,_appliedMode;
     private bool _desru;
     private long _nextDetection;
-    private PerformanceMetrics(Process game, IntPtr state, IntPtr mode) { _game = game; _state = state; _mode = mode; }
+    internal PerformanceMetrics(Process game, IntPtr state, IntPtr mode) { _game = game; _state = state; _mode = mode; }
 
     internal static PerformanceMetrics Attach(Process game, NativeGameLayout layout, int metricsOffset)
     {
@@ -88,7 +89,7 @@ internal sealed class PerformanceMetrics : IDisposable
         }
         if(!_desru && _game.ReadValue<int>(_mode, out int mode) && mode is >= 0 and <= 6) {
             _savedMode ??= mode;
-            if(mode != 2 && !_game.WriteBytes(_mode, BitConverter.GetBytes(2))) throw new IOException("Cannot enable LAB performance metrics");
+            if(mode != 2) { if(!_game.WriteBytes(_mode, BitConverter.GetBytes(2))) throw new IOException("Cannot enable LAB performance metrics"); _appliedMode=2; }
         }
         byte[] flags = new byte[8];
         BitConverter.GetBytes(_desru ? 1 : 0).CopyTo(flags, 0);
@@ -98,11 +99,24 @@ internal sealed class PerformanceMetrics : IDisposable
             !_game.WriteBytes(_state, BitConverter.GetBytes(Environment.TickCount64 + 3000))) throw new IOException("Cannot update LAB indicator");
     }
 
+    internal void UpdateRestartNotice()
+    {
+        // Only insert the requested notice. The existing coexistence path retains
+        // original metrics text and the driver row; no normal LAB settings apply.
+        if(_game.ReadValue<int>(_mode,out int mode)&&mode==0){
+            _savedMode??=mode;_appliedMode=1;
+            if(!_game.WriteBytes(_mode,BitConverter.GetBytes(1)))throw new IOException("Cannot display restart notice");
+        }
+        if(!_game.WriteBytes(_state+8,BitConverter.GetBytes(1).Concat(new byte[4]).ToArray())||
+            !_game.WriteBytes(_state+64,Encoding.ASCII.GetBytes(RestartText+"\0"))||
+            !_game.WriteBytes(_state,BitConverter.GetBytes(Environment.TickCount64+3000)))throw new IOException("Cannot update restart notice");
+    }
+
     private void RestoreMode()
     {
-        if(_savedMode is int mode && _game.ReadValue<int>(_mode, out int current) && current == 2)
+        if(_savedMode is int mode && _game.ReadValue<int>(_mode, out int current) && current == _appliedMode)
             _game.WriteBytes(_mode, BitConverter.GetBytes(mode));
-        _savedMode = null;
+        _savedMode = _appliedMode = null;
     }
     public void Dispose()
     {
