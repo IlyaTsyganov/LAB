@@ -14,8 +14,9 @@ internal static class GameLauncher
         File.WriteAllText(Path.Combine(folder,"lab-lighting.json"),JsonSerializer.Serialize(manifest,SettingsStore.Json));WriteLightingControl(store);return LoaderPath(folder);
     }
     internal static string LoaderPath(string path){var buffer=new StringBuilder(32768);uint count=GetShortPathName(path,buffer,(uint)buffer.Capacity);return count>0&&count<buffer.Capacity?buffer.ToString():path;}
+    internal static bool LightingActive(int pid){try{using var status=EventWaitHandle.OpenExisting("Local\\LAB.Lighting.Active."+pid);return status.WaitOne(0);}catch(WaitHandleCannotBeOpenedException){return false;}catch(UnauthorizedAccessException){return false;}}
     [DllImport("kernel32.dll",EntryPoint="GetShortPathNameW",CharSet=CharSet.Unicode)]private static extern uint GetShortPathName(string path,StringBuilder output,uint capacity);
-    internal static void WriteLightingControl(SettingsStore store){string path=Path.Combine(store.DirectoryPath,"lighting.ini");File.WriteAllText(path+".tmp","[Lighting]\nEnabled="+(store.Snapshot().LightingFix?"1":"0")+"\n");File.Move(path+".tmp",path,true);}
+    internal static void WriteLightingControl(SettingsStore store,bool running=true){using var owner=Process.GetCurrentProcess();string path=Path.Combine(store.DirectoryPath,"lighting.ini");File.WriteAllText(path+".tmp","[Lighting]\nEnabled="+(running&&store.Snapshot().LightingFix?"1":"0")+"\nOwnerPid="+owner.Id+"\nOwnerStarted="+owner.StartTime.ToUniversalTime().ToFileTimeUtc()+"\n");File.Move(path+".tmp",path,true);}
     internal static ProcessStartInfo CreateStartInfo(LabSettings settings,string dataDirectory,string? lightingFolder=null)
     {
         string path=Path.GetFullPath(settings.GamePath);if(!File.Exists(path)||!Path.GetFileName(path).Equals("DOOMEternalx64vk.exe",StringComparison.OrdinalIgnoreCase))throw new ArgumentException("Select an existing DOOMEternalx64vk.exe.");

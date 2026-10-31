@@ -17,7 +17,7 @@ namespace Lab.Overlay {
         internal bool TintAttached => _tintAttached;
         private readonly float _glyphWidth, _glyphHeight;
         internal const int ModuleSize11 = 492113920;
-        internal bool CommandsRegistered => _game.ReadValue<int>(_state + 4) == 3;
+        internal bool CommandsRegistered => _game.ReadValue<int>(_state + 4) == NativeSpeedometerCode.Commands.Length;
         internal long RenderCount => _game.ReadValue<long>(_state + 8);
         internal IntPtr State => _state;
         internal NativeGameLayout Layout => _layout;
@@ -57,10 +57,13 @@ namespace Lab.Overlay {
                 if(existing != null && existing.AsSpan(0, 12).SequenceEqual(Convert.FromHexString("5356574883EC40488BF248BB"))) {
                     IntPtr state = new(BitConverter.ToInt64(existing, 12));
                     string magic = Encoding.ASCII.GetString(game.ReadBytes(state + 48, 8) ?? Array.Empty<byte>());
-                    if(magic == NativeSpeedometerCode.Magic) {
+                    if(magic == NativeSpeedometerCode.Magic || magic == NativeSpeedometerCode.LegacyMagic) {
                         byte[] descriptions = CreateState();
                         for(int i = 0; i < NativeSpeedometerCode.Commands.Length; i++) game.WriteBytes(state + NativeSpeedometerCode.NamesOffset + i * 0x100, descriptions.AsSpan(NativeSpeedometerCode.NamesOffset + i * 0x100, 256).ToArray());
-                        return new NativeSpeedometer(game, state, layout);
+                        if(magic == NativeSpeedometerCode.Magic) return new NativeSpeedometer(game, state, layout);
+                        // Install new code in a separate allocation; keep the old
+                        // callbacks/state alive for registered commands and readers.
+                        previousState = state;
                     }
                 }
                 if(previousState == IntPtr.Zero) throw new NotSupportedException("Another HUD renderer hook is installed; it was left unchanged");
@@ -129,7 +132,8 @@ namespace Lab.Overlay {
             for(int i = 0; i < NativeSpeedometerCode.Commands.Length; i++) {
                 Encoding.ASCII.GetBytes(NativeSpeedometerCode.Commands[i]).CopyTo(data, NativeSpeedometerCode.NamesOffset + i * 0x100);
                 string help = i == 4 ? "<0..100>: low-health red tint opacity; 100 restores original opacity" :
-                    i == 7 ? "<0|1>: include vertical speed without a direction sign" :
+                    i == 8 ? "<0|1>: vertical direction sign; 1=+up/-down, 0=magnitude" :
+                    i == 7 ? "<0|1>: include vertical speed" :
                     i == 5 ? "<0|1>: include last-landing speed (preserved while hidden)" :
                     i == 6 ? "<R G B> [current|landing|vertical]: text color, integer channels 0..255" :
                     i == 0 ? "<0|1> [current|landing|vertical]: show/hide LAB numbers" :

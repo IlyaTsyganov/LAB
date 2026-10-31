@@ -8,7 +8,8 @@
     "MaxHz": 64044640,
     "IsLoading": 80812760,
     "IsLoading2": 100995648,
-    "IsInGame": 101892568
+    "IsInGame": 101892568,
+    "Metrics": 64035616
   },
   {
     "Name": "1.1",
@@ -19,7 +20,8 @@
     "MaxHz": 64509792,
     "IsLoading": 80753624,
     "IsLoading2": 100936512,
-    "IsInGame": 100626136
+    "IsInGame": 100626136,
+    "Metrics": 64500768
   },
   {
     "Name": "2.0",
@@ -30,7 +32,8 @@
     "MaxHz": 65012848,
     "IsLoading": 54933144,
     "IsLoading2": 84418216,
-    "IsInGame": 104294248
+    "IsInGame": 104294248,
+    "Metrics": 65003696
   },
   {
     "Name": "2.1",
@@ -41,7 +44,8 @@
     "MaxHz": 65025264,
     "IsLoading": 84430632,
     "IsLoading2": 104616600,
-    "IsInGame": 104306280
+    "IsInGame": 104306280,
+    "Metrics": 65016112
   },
   {
     "Name": "3.0",
@@ -52,7 +56,8 @@
     "MaxHz": 66859648,
     "IsLoading": 86490264,
     "IsLoading2": 107568344,
-    "IsInGame": 107249440
+    "IsInGame": 107249440,
+    "Metrics": 66850496
   },
   {
     "Name": "3.1",
@@ -63,7 +68,8 @@
     "MaxHz": 66859776,
     "IsLoading": 86490392,
     "IsLoading2": 107568472,
-    "IsInGame": 107249568
+    "IsInGame": 107249568,
+    "Metrics": 66850624
   },
   {
     "Name": "4.0",
@@ -74,7 +80,8 @@
     "MaxHz": 66399248,
     "IsLoading": 86048120,
     "IsLoading2": 107678600,
-    "IsInGame": 107368592
+    "IsInGame": 107368592,
+    "Metrics": 66390096
   },
   {
     "Name": "4.1",
@@ -85,7 +92,8 @@
     "MaxHz": 66399248,
     "IsLoading": 86048120,
     "IsLoading2": 107681672,
-    "IsInGame": 107371664
+    "IsInGame": 107371664,
+    "Metrics": 66390096
   },
   {
     "Name": "5.0",
@@ -96,7 +104,8 @@
     "MaxHz": 67678112,
     "IsLoading": 82860232,
     "IsLoading2": 104490256,
-    "IsInGame": 104183920
+    "IsInGame": 104183920,
+    "Metrics": 67668960
   },
   {
     "Name": "5.1",
@@ -107,7 +116,8 @@
     "MaxHz": 67678112,
     "IsLoading": 82860232,
     "IsLoading2": 104490256,
-    "IsInGame": 104183920
+    "IsInGame": 104183920,
+    "Metrics": 67668960
   },
   {
     "Name": "6.0",
@@ -118,7 +128,8 @@
     "MaxHz": 69547504,
     "IsLoading": 83934872,
     "IsLoading2": 108542096,
-    "IsInGame": 108231408
+    "IsInGame": 108231408,
+    "Metrics": 69538352
   },
   {
     "Name": "6.1",
@@ -129,7 +140,8 @@
     "MaxHz": 69547504,
     "IsLoading": 83934872,
     "IsLoading2": 108542096,
-    "IsInGame": 108231408
+    "IsInGame": 108231408,
+    "Metrics": 69538352
   },
   {
     "Name": "6.2",
@@ -140,7 +152,8 @@
     "MaxHz": 69557104,
     "IsLoading": 83944472,
     "IsLoading2": 108551696,
-    "IsInGame": 108241872
+    "IsInGame": 108241872,
+    "Metrics": 69547952
   },
   {
     "Name": "6.3",
@@ -151,7 +164,8 @@
     "MaxHz": 69557104,
     "IsLoading": 83944472,
     "IsLoading2": 108551696,
-    "IsInGame": 108241872
+    "IsInGame": 108241872,
+    "Metrics": 69547952
   },
   {
     "Name": "6.4",
@@ -162,7 +176,8 @@
     "MaxHz": 69557104,
     "IsLoading": 83944472,
     "IsLoading2": 108551696,
-    "IsInGame": 108241872
+    "IsInGame": 108241872,
+    "Metrics": 69547952
   },
   {
     "Name": "6.66 Rev 2",
@@ -173,7 +188,8 @@
     "MaxHz": 71522192,
     "IsLoading": 85935128,
     "IsLoading2": 110478480,
-    "IsInGame": 110163728
+    "IsInGame": 110163728,
+    "Metrics": 71513040
   },
   {
     "Name": "6.66 Rev 2.2",
@@ -184,7 +200,8 @@
     "MaxHz": 71341840,
     "IsLoading": 85754776,
     "IsLoading2": 110298128,
-    "IsInGame": 109987952
+    "IsInGame": 109987952,
+    "Metrics": 71332688
   },
   {
     "Name": "6.66 Rev 2.2 (Gamepass)",
@@ -195,7 +212,8 @@
     "MaxHz": 72111120,
     "IsLoading": 86524056,
     "IsLoading2": 111068688,
-    "IsInGame": 110753808
+    "IsInGame": 110753808,
+    "Metrics": 72101968
   },
   {
     "Name": "6.66 Rev 3",
@@ -206,7 +224,8 @@
     "MaxHz": 74079840,
     "IsLoading": 88492952,
     "IsLoading2": 71305776,
-    "IsInGame": 112726192
+    "IsInGame": 112726192,
+    "Metrics": 74070688
   },
   {
     "Name": "6.66 Rev 3.1",
@@ -217,7 +236,8 @@
     "MaxHz": 74133968,
     "IsLoading": 88546840,
     "IsLoading2": 71357088,
-    "IsInGame": 112777880
+    "IsInGame": 112777880,
+    "Metrics": 74124816
   },
   {
     "Name": "6.66 Rev 3.2",
@@ -228,6 +248,7 @@
     "MaxHz": 74155600,
     "IsLoading": 88568472,
     "IsLoading2": 71378592,
-    "IsInGame": 112799512
+    "IsInGame": 112799512,
+    "Metrics": 74146448
   }
 ]

@@ -5,9 +5,9 @@ namespace Lab.Overlay {
         internal static string Format(SpeedometerReading reading) {
             if(!reading.Supported) return "N/A";
             if(!reading.Speed.HasValue) return "--";
-            string text = reading.Speed.Value.ToString("0.00", CultureInfo.InvariantCulture);
+            string text = reading.Speed.Value.ToString(reading.ShowSign ? "+0.00;-0.00;0.00" : "0.00", CultureInfo.InvariantCulture);
             // Keep even exceptional finite values inside the bounded native text buffer.
-            return text.Length <= 12 ? text : reading.Speed.Value.ToString("0.00E+0", CultureInfo.InvariantCulture);
+            return text.Length <= 12 ? text : reading.Speed.Value.ToString(reading.ShowSign ? "+0.00E+0;-0.00E+0;0.00" : "0.00E+0", CultureInfo.InvariantCulture);
         }
     }
 }

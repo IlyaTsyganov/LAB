@@ -11,6 +11,8 @@ namespace Lab.Overlay {
         public string? TintFailure { get; init; }
         public NativeModbotInputLayout? ModbotInput { get; init; }
         public string? ModbotInputFailure { get; init; }
+        public MetricsLayout? Metrics { get; init; }
+        public string? MetricsFailure { get; init; }
         private static readonly Dictionary<string, NativeGameLayout> Cache = new();
         internal static NativeGameLayout Resolve(string path) {
             var file = new FileInfo(path);
@@ -305,6 +307,33 @@ namespace Lab.Overlay {
                     Field("idFXSingleAction", "startCondition"), EnumValue("fxActionType_t", "FX_SCREEN_VIGNETTE"),
                     EnumValue("fxCondition_t", "FX_HEALTH_LOW"), EnumValue("fxCondition_t", "FX_HEALTH_REALLY_LOW"));
             }
+            private MetricsLayout ResolveMetrics() {
+                int fps = Rva(Unique(Find(Encoding.ASCII.GetBytes("%i FPS\0\0%.2fms\0\0Frame : %u")), "metrics FPS format"));
+                int last = Unique(Find(Encoding.ASCII.GetBytes("Driver %s\0")).Select(Rva).Where(r => r > fps && r < fps + 512), "metrics final format");
+                (int Site, int Function) CallFor(int format) {
+                    var matches = new List<(int Site, int Function)>();
+                    foreach(int at in Find(new byte[] { 0x48, 0x8d, 0x05 }).Where(at => Relative(at + 3) == format))
+                        for(int n = 7; n < 64 && at + n + 5 < _length; n++)
+                            if(Bytes[at + n] == 0xe8) {
+                                int function = Relative(at + n + 1);
+                                if(IsCode(function) && Bytes.Slice(Offset(function), PerformanceMetrics.Prologue.Length).SequenceEqual(PerformanceMetrics.Prologue))
+                                    matches.Add((Rva(at + n), function));
+                            }
+                    if(matches.Count != 1) throw new NotSupportedException("Cannot uniquely resolve a metrics formatter call");
+                    return matches[0];
+                }
+                var firstCall = CallFor(fps); var lastCall = CallFor(last);
+                if(firstCall.Function != lastCall.Function || lastCall.Site <= firstCall.Site)
+                    throw new NotSupportedException("Incoherent performance metrics formatter");
+                int scaleInstruction = Offset(firstCall.Site + 5), displacement;
+                if(Bytes.Slice(scaleInstruction, 4).SequenceEqual(new byte[] { 0xf3, 0x44, 0x0f, 0x10 }) && (Bytes[scaleInstruction + 4] & 0xc7) == 5) displacement = 5;
+                else if(Bytes.Slice(scaleInstruction, 3).SequenceEqual(new byte[] { 0xf3, 0x0f, 0x10 }) && (Bytes[scaleInstruction + 3] & 0xc7) == 5) displacement = 4;
+                else throw new NotSupportedException("Cannot resolve the original small metrics font");
+                float scale = BitConverter.Int32BitsToSingle(Int(Offset(Relative(scaleInstruction + displacement))));
+                if(!float.IsFinite(scale) || scale <= 0 || scale > 10) throw new NotSupportedException("Invalid metrics font scale");
+                return new(firstCall.Function, fps, last, firstCall.Site + 5, lastCall.Site + 5, scale);
+            }
+
             internal NativeGameLayout Resolve() {
                 int slot = Vtable(".?AVidDebugHUDLocal@@") + 8;
                 int render = checked((int) (Long(Offset(slot)) - _base));
@@ -324,6 +353,8 @@ namespace Lab.Overlay {
                 catch(NotSupportedException e) { layout = layout with { TintFailure = e.Message }; }
                 try { layout = layout with { ModbotInput = ResolveModbotInput() }; }
                 catch(NotSupportedException e) { layout = layout with { ModbotInputFailure = e.Message }; }
+                  try { layout = layout with { Metrics = ResolveMetrics() }; }
+                  catch(NotSupportedException e) { layout = layout with { MetricsFailure = e.Message }; }
                 return layout;
             }
             public void Dispose() {

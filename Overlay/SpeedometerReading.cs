@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 namespace Lab.Overlay;
-internal readonly record struct SpeedometerReading(bool Enabled,int X,int Y,float? Speed,bool Supported=true,double Scale=1,Color TextColor=default)
+internal readonly record struct SpeedometerReading(bool Enabled,int X,int Y,float? Speed,bool Supported=true,double Scale=1,Color TextColor=default,bool ShowSign=false)
 {internal Color DisplayColor=>TextColor.IsEmpty?Color.White:Color.FromArgb(TextColor.R,TextColor.G,TextColor.B);}
 internal static class GameViewport
 {

@@ -4,12 +4,12 @@ namespace Lab.Overlay {
     internal static class NativeSpeedometerCode {
         internal static readonly string[] Commands = {
             "lab_speedometer_show", "lab_speedometer_x_pos", "lab_speedometer_y_pos", "lab_speedometer_size", "lab_lowhptintopacity",
-            "lab_speedometer_showlanding", "lab_speedometer_color", "lab_speedometer_showvertical"
+            "lab_speedometer_showlanding", "lab_speedometer_color", "lab_speedometer_showvertical", "lab_speedometer_verticalsign"
         };
         internal const int MailboxOffset = 1536, MailboxStride = 160, NamesOffset = 3072;
         internal static readonly int[] ReadingOffsets = {64, 128, 512};
         internal const int StateSize = 8192, CallbackStart = 0x800, CallbackStride = 0x200;
-        internal const string Magic = "LABHUD01";
+        internal const string Magic = "LABHUD02", LegacyMagic = "LABHUD01";
         internal const int ConsoleReadyOffset = 768, ConsoleFormatOffset = 772, ConsoleTextOffset = 784, ConsoleTextCapacity = 576;
 
         internal sealed class Code {
@@ -37,15 +37,19 @@ namespace Lab.Overlay {
             c.Call(original);
             c.Emit("83BBC000000000"); c.Jump("0F8E", "tintHeartbeatDone");
             c.Emit("F0FF8BC0000000"); c.Label("tintHeartbeatDone");
-            c.Emit("48FF4308 837B0403"); c.Jump("0F84", "registered");
+            c.Emit("48FF4308 837B04"); c.Emit(Commands.Length.ToString("X2")); c.Jump("0F84", "registered");
             for(int i = 0; i < Commands.Length; i++) {
+                // Legacy HUDs already registered the first eight callbacks against
+                // the retained shared state. Only register the added command.
+                if(i < 8) { c.Emit("837B0403"); c.Jump("0F84", $"command{i}Done"); }
                 c.Emit("48B9"); c.Pointer(commandSystem);
                 c.Emit("48BA"); c.Pointer(state + NamesOffset + i * 0x100);
                 c.Emit("49B8"); c.Pointer(codeAddress + CallbackStart + i * CallbackStride);
                 c.Emit("49B9"); c.Pointer(state + NamesOffset + i * 0x100 + 64);
                 c.Emit("48C744242000000000 C744242802000000"); c.Call(addCommand);
+                if(i < 8) c.Label($"command{i}Done");
             }
-            c.Emit("C7430403000000");
+            c.Emit("C74304"); c.Bytes.AddRange(BitConverter.GetBytes(Commands.Length));
             c.Label("registered");
             if(print != 0) {
                 // Print on the game's own HUD thread even while the meters are hidden.

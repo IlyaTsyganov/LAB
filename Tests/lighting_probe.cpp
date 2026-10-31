@@ -4,11 +4,12 @@
 #include <vulkan/vulkan.h>
 #include "../Native/Lighting/lighting_patch.h"
 #include <cstdio>
+#include <cstring>
 #include <stdexcept>
 #include <vector>
 static int checks=0;
 static void check(bool ok,const char* description){if(!ok)throw std::runtime_error(description);checks++;}
-int main(){try{
+int main(int argc,char** argv){try{
     VkMemoryBarrier memory{VK_STRUCTURE_TYPE_MEMORY_BARRIER,nullptr,VK_ACCESS_SHADER_WRITE_BIT,VK_ACCESS_SHADER_READ_BIT};
     LightingBarrierPatch off(false,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,1,&memory,0,nullptr);
     check(!off.changed&&off.memory==&memory,"Disabled patch must preserve pointers");
@@ -18,6 +19,7 @@ int main(){try{
     check(implicit.memoryCount==1&&implicit.memory[0].srcAccessMask==VK_ACCESS_SHADER_WRITE_BIT,"Implicit shader writes must become visible to indirect reads");
     LightingBarrierPatch unrelated(true,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,1,&memory,0,nullptr);
     check(!unrelated.changed,"Unrelated destinations must pass through");
+    if(argc>1&&std::strcmp(argv[1],"--math-only")==0){std::printf("PASS: %d lighting math checks (Vulkan device probe skipped).\n",checks);return 0;}
     HMODULE loader=LoadLibraryW(L"vulkan-1.dll");check(loader!=nullptr,"Vulkan loader missing");auto gipa=reinterpret_cast<PFN_vkGetInstanceProcAddr>(GetProcAddress(loader,"vkGetInstanceProcAddr"));
     auto create=reinterpret_cast<PFN_vkCreateInstance>(gipa(nullptr,"vkCreateInstance"));VkInstance instance{};
     const char* layers[]={"VK_LAYER_LAB_lighting"};VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO,nullptr,"LAB isolated lighting probe",1,"LAB",1,VK_API_VERSION_1_1};VkInstanceCreateInfo info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,nullptr,0,&app,1,layers,0,nullptr};

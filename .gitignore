@@ -9,3 +9,8 @@ Tests/output/
 .tools/
 *.user
 *.log
+*.obj
+*.lib
+*.exp
+publish-fixed/
+logs/

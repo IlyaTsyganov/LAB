@@ -1,13 +1,14 @@
 (function(){
  'use strict';const root=document.getElementById('lab-frost-layouts'),app=root.querySelector('.lab-app');const bridge=window.chrome?.webview;
- let settings={gamePath:'',lightingFix:true,modbotFix:true,hideDriverName:true,speedometersEnabled:true,tintOpacity:50,current:{enabled:true,x:160,y:860,size:1,color:'#f1f1f1'},landing:{enabled:true,x:720,y:860,size:1,color:'#e4ba73'},vertical:{enabled:true,x:1280,y:860,size:1,color:'#8ad5e9'}};
- const timers=new Map(),pending=new Map();const feedback=app.querySelector('[data-feedback]');let connected=false;
+ let settings={gamePath:'',lightingFix:true,modbotFix:true,hideDriverName:true,speedometersEnabled:false,tintOpacity:100,verticalShowSign:true,current:{enabled:true,x:160,y:860,size:3,color:'#f1f1f1'},landing:{enabled:true,x:720,y:860,size:3,color:'#e4ba73'},vertical:{enabled:true,x:1280,y:860,size:3,color:'#8ad5e9'}};
+ const timers=new Map(),pending=new Map();const feedback=app.querySelector('[data-feedback]');let connected=false,featureStatus=null;
  app.querySelectorAll('[data-slot]').forEach(slot=>slot.append(root.querySelector('#lab-'+slot.dataset.slot+'-template').content.cloneNode(true)));
- app.append(root.querySelector('#lab-commands-template').content.cloneNode(true));
+ app.append(root.querySelector('#lab-help-template').content.cloneNode(true));
  const post=data=>bridge?.postMessage(data);
  function notify(text){feedback.textContent=text;}
  function save(key,value,delay=0){clearTimeout(timers.get(key));const apply=()=>{pending.delete(key);const parts=key.split('.');if(parts.length===2)settings[parts[0]][parts[1]]=value;else settings[key]=value;if(bridge)post({kind:'setting',key,value});else{notify('Preference updated');window.openai?.setWidgetState?.({modelContent:{product:'LAB',layout:'Inline Controls',palette:'UAC Frost',independentMeterSizes:true,settings}})?.catch(()=>{});}};if(delay){pending.set(key,apply);timers.set(key,setTimeout(apply,delay));}else apply();}
- const commandModal=app.querySelector('[data-command-modal]');
+ app.querySelector('[data-window-size]').addEventListener('change',e=>post({kind:'window',action:e.target.value}));
+ const helpModal=app.querySelector('[data-help-modal]');
  const colorModal=document.createElement('div');colorModal.className='lab-modal-shade';colorModal.hidden=true;
  colorModal.innerHTML='<section class="lab-modal" role="dialog" aria-modal="true" aria-label="Speedometer text color"><div class="lab-modal-head"><h2>Text color</h2></div><label class="lab-field">Hex color<input data-hex type="text" maxlength="7" aria-label="Hex color" spellcheck="false"></label><div class="lab-color-fields"><label class="lab-field">Red<input data-rgb="0" type="number" min="0" max="255" aria-label="Red channel"></label><label class="lab-field">Green<input data-rgb="1" type="number" min="0" max="255" aria-label="Green channel"></label><label class="lab-field">Blue<input data-rgb="2" type="number" min="0" max="255" aria-label="Blue channel"></label></div><div class="lab-dialog-actions"><button type="button" class="lab-button" data-color-cancel>Cancel</button><button type="button" class="lab-button lab-primary" data-color-apply>Apply</button></div></section>';
  app.append(colorModal);let colorTarget='current',colorValue='#ffffff',lastColorButton=null;
@@ -19,7 +20,10 @@
  const notice=document.createElement('div');notice.className='lab-modal-shade';notice.hidden=true;notice.innerHTML='<section class="lab-modal" role="dialog" aria-modal="true" aria-label="LAB message"><div class="lab-modal-head"><h2 data-notice-title>LAB</h2></div><p class="lab-dialog-text" data-notice-body></p><div class="lab-dialog-actions"><button class="lab-button lab-primary" type="button" data-notice-close>OK</button></div></section>';app.append(notice);notice.querySelector('[data-notice-close]').addEventListener('click',()=>notice.hidden=true);
  function message(title,text){notice.querySelector('[data-notice-title]').textContent=title;notice.querySelector('[data-notice-body]').textContent=text;notice.hidden=false;notice.querySelector('[data-notice-close]').focus();}
  function render(){
-  app.querySelector('[data-all-meters]').checked=settings.speedometersEnabled;
+  app.querySelector('[data-all-meters]').checked=settings.speedometersEnabled;app.querySelector('[data-vertical-sign]').checked=!!settings.verticalShowSign;
+  const waiting=bridge?'Waiting for game':'Preview mode';
+  const statuses=featureStatus||{lighting:settings.lightingFix?waiting+' · requires NVIDIA.':'Off',modbot:settings.modbotFix?waiting:'Off',tint:settings.tintOpacity===100?'Default · 100%':waiting};
+  app.querySelectorAll('[data-feature-status]').forEach(e=>{e.textContent=statuses[e.dataset.featureStatus];e.title=e.textContent;});
   const path=app.querySelector('[data-game-path]');if(document.activeElement!==path)path.value=settings.gamePath;path.placeholder='Select DOOMEternalx64vk.exe';app.querySelectorAll('[data-fix]').forEach(e=>e.checked=settings[{lighting:'lightingFix',modbot:'modbotFix',driver:'hideDriverName'}[e.dataset.fix]]);app.querySelectorAll('[data-meter]').forEach(e=>e.checked=settings[e.dataset.meter].enabled);
   app.querySelectorAll('[data-inline-position]').forEach(e=>{if(document.activeElement!==e)e.value=settings[e.dataset.for][e.dataset.inlinePosition];});app.querySelectorAll('[data-inline-size]').forEach(e=>{if(document.activeElement!==e)e.value=settings[e.dataset.inlineSize].size;});app.querySelectorAll('[data-meter-color]').forEach(e=>e.style.setProperty('--meter-color',settings[e.dataset.meterColor].color));app.querySelector('[data-tint]').value=settings.tintOpacity;app.querySelector('[data-tint-output]').value=settings.tintOpacity+'%';app.querySelector('[data-launch]').disabled=!settings.gamePath||connected;
  }
@@ -27,6 +31,7 @@
  app.querySelectorAll('[data-inline-size]').forEach(e=>e.addEventListener('input',()=>{const v=Number(e.value);if(e.value!==''&&Number.isFinite(v)&&v>=.1&&v<=10)save(e.dataset.inlineSize+'.size',v,160);}));
  app.querySelectorAll('[data-meter]').forEach(e=>e.addEventListener('change',()=>save(e.dataset.meter+'.enabled',e.checked)));
  app.querySelector('[data-all-meters]').addEventListener('change',e=>save('speedometersEnabled',e.target.checked));
+ app.querySelector('[data-vertical-sign]').addEventListener('change',e=>save('verticalShowSign',e.target.checked));
  app.querySelectorAll('[data-fix]').forEach(e=>e.addEventListener('change',()=>save({lighting:'lightingFix',modbot:'modbotFix',driver:'hideDriverName'}[e.dataset.fix],e.checked)));
  app.querySelector('[data-game-path]').addEventListener('change',e=>{save('gamePath',e.target.value.trim());render();});
  app.querySelector('[data-browse]').innerHTML='<span class="lab-folder-icon" aria-hidden="true"></span>';
@@ -34,9 +39,11 @@
  app.querySelector('[data-tint]').addEventListener('input',e=>{app.querySelector('[data-tint-output]').value=e.target.value+'%';save('tintOpacity',Number(e.target.value),100);} );
  app.querySelector('[data-launch]').addEventListener('click',()=>bridge?post({kind:'launch'}):message('Design preview','No game is launched from this preview.'));
  app.querySelectorAll('[data-window]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.window==='close')for(const apply of [...pending.values()])apply();post({kind:'window',action:b.dataset.window});}));
- app.querySelector('[data-commands]').addEventListener('click',()=>{commandModal.hidden=false;commandModal.querySelector('[data-close-commands]').focus();});commandModal.querySelector('[data-close-commands]').addEventListener('click',()=>{commandModal.hidden=true;app.querySelector('[data-commands]').focus();});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'){colorModal.hidden=true;commandModal.hidden=true;notice.hidden=true;}});
- bridge?.addEventListener('message',event=>{const data=event.data;if(data.kind==='config'){settings=data.settings;connected=data.connected;render();app.querySelector('.lab-status').textContent=data.status;notify(data.feedback||'Preferences saved');}else if(data.kind==='notice')message(data.title,data.text);});
+ app.querySelector('[data-help]').addEventListener('click',()=>{helpModal.hidden=false;helpModal.querySelector('[data-close-help]').focus();});helpModal.querySelector('[data-close-help]').addEventListener('click',()=>{helpModal.hidden=true;app.querySelector('[data-help]').focus();});
+ function selectHelp(tab){helpModal.querySelectorAll('[data-help-tab]').forEach(b=>{const selected=b===tab;b.setAttribute('aria-selected',selected);b.tabIndex=selected?0:-1;});helpModal.querySelectorAll('[data-help-panel]').forEach(p=>p.hidden=p.dataset.helpPanel!==tab.dataset.helpTab);}
+ helpModal.querySelectorAll('[data-help-tab]').forEach(tab=>{tab.addEventListener('click',()=>selectHelp(tab));tab.addEventListener('keydown',e=>{const tabs=[...helpModal.querySelectorAll('[data-help-tab]')];let i=tabs.indexOf(tab);if(e.key==='ArrowRight'||e.key==='ArrowLeft')i=(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;else if(e.key==='Home')i=0;else if(e.key==='End')i=tabs.length-1;else return;e.preventDefault();selectHelp(tabs[i]);tabs[i].focus();});});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){colorModal.hidden=true;helpModal.hidden=true;notice.hidden=true;}});
+ bridge?.addEventListener('message',event=>{const data=event.data;if(data.kind==='config'){settings=data.settings;connected=data.connected;featureStatus=data.featureStatus||null;render();app.querySelector('.lab-status').textContent=data.status;notify(data.feedback||'Preferences saved');}else if(data.kind==='notice')message(data.title,data.text);});
  render();window.labUiSnapshot=()=>({settings:structuredClone(settings),fontStatus:document.fonts.status,controls:app.querySelectorAll('.window-actions button').length,inlineSizes:app.querySelectorAll('[data-inline-size]').length});
  const emblem=new Image();emblem.src='../lab.png';
  Promise.all([document.fonts.ready,emblem.decode()]).then(()=>{app.getBoundingClientRect();post({kind:'ready'});});

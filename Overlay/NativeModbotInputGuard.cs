@@ -79,7 +79,7 @@ namespace Lab.Overlay {
             catch(InvalidOperationException) { }
             catch(System.ComponentModel.Win32Exception) { }
         }
-        private static IntPtr RemoteApi(Process game,string module,string name) {
+        internal static IntPtr RemoteApi(Process game,string module,string name) {
             IntPtr address=GetProcAddress(GetModuleHandle(module),name);
             if(address==IntPtr.Zero)throw new NotSupportedException("Missing Windows input guard API");
             using var current=Process.GetCurrentProcess();

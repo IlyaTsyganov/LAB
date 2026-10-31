@@ -23,3 +23,52 @@ body,#lab-frost-layouts{font-family:LABUI}
 #lab-frost-layouts [data-launch]:disabled{opacity:.45;filter:none}
 @media(max-width:800px){#lab-frost-layouts .lab-inline-head,#lab-frost-layouts .lab-inline-row{grid-template-columns:minmax(100px,1.4fr) 36px minmax(48px,1fr) minmax(48px,1fr) 60px 48px;gap:10px}}
 @media(max-width:600px){#lab-frost-layouts .lab-inline-row{grid-template-columns:repeat(2,minmax(0,1fr))}#lab-frost-layouts .lab-inline-row>.lab-meter-name{grid-column:1}#lab-frost-layouts .lab-inline-row>.lab-switch{grid-column:2}#lab-frost-layouts .lab-inline-row .lab-field>span{display:block}#lab-frost-layouts .lab-modal-shade{padding:65px 12px 20px}}
+
+/* Compact desktop geometry; preserve the bundled typefaces and all controls. */
+#lab-frost-layouts .lab-app{font-size:15px}
+#lab-frost-layouts .lab-header{min-height:62px;padding:12px 22px}
+#lab-frost-layouts .lab-emblem{width:32px;height:36px}
+#lab-frost-layouts .lab-word{font-size:24px}
+#lab-frost-layouts .lab-content{padding:16px 20px}
+#lab-frost-layouts .lab-heading{margin-bottom:12px;gap:8px}
+#lab-frost-layouts h1{font-size:25px}
+#lab-frost-layouts .lab-heading .lab-small{font-size:11px;margin-top:3px}
+#lab-frost-layouts .lab-status{max-width:100%;white-space:normal;font-size:11px}
+#lab-frost-layouts .lab-panel{padding:13px 14px}
+#lab-frost-layouts .lab-panel h2{font-size:16px;margin-bottom:11px}
+#lab-frost-layouts .lab-gamebar{grid-template-columns:minmax(0,1fr) 135px;gap:12px;margin-bottom:12px}
+#lab-frost-layouts .lab-primary{font-size:14px!important;padding:8px 14px;min-height:34px}
+#lab-frost-layouts .lab-meter-heading{margin-bottom:10px}
+#lab-frost-layouts .lab-inline-panel{margin-bottom:12px}
+#lab-frost-layouts .lab-inline-head,#lab-frost-layouts .lab-inline-row{grid-template-columns:minmax(118px,1.4fr) 38px minmax(58px,1fr) minmax(58px,1fr) 62px 48px;gap:10px}
+#lab-frost-layouts .lab-inline-head{padding-bottom:7px}
+#lab-frost-layouts .lab-inline-row{padding:8px 0}
+#lab-frost-layouts .lab-inline-row .lab-meter-name{font-size:14px}
+#lab-frost-layouts .lab-inline-row .lab-small{font-size:11px;margin-top:2px}
+#lab-frost-layouts .lab-field input:not([type=range]):not([type=color]),#lab-frost-layouts .lab-color-button{min-height:34px;height:34px;padding:6px 8px;font-size:14px}
+#lab-frost-layouts .lab-inline-fixes{gap:0 16px}
+#lab-frost-layouts .lab-toggle{font-size:14px;gap:8px}
+#lab-frost-layouts .lab-inline-fixes .lab-small{font-size:11px;line-height:1.4}
+#lab-frost-layouts .lab-inline-tint{padding-top:10px;margin-top:5px}
+#lab-frost-layouts .lab-footer{padding:8px 20px;min-height:44px;gap:10px}
+#lab-frost-layouts .lab-window-size{display:flex;align-items:center;gap:7px;margin-left:auto;font-size:11px}
+#lab-frost-layouts .lab-window-size select{background:var(--lb-bg);border:1px solid var(--lb-line);padding:4px 6px;font-size:11px;color:var(--lb-text)}
+#lab-frost-layouts .lab-modal-shade{padding:65px 16px 20px}
+#lab-frost-layouts .lab-modal{padding:18px;max-height:calc(100vh - 85px);overflow:auto}
+#lab-frost-layouts .lab-help-tabs{display:flex;gap:18px;border-bottom:1px solid var(--lb-line);margin-bottom:16px}
+#lab-frost-layouts .lab-help-tabs button{border:0;border-bottom:2px solid transparent;background:transparent;font-size:13px;padding:8px 0;color:var(--lb-muted)}
+#lab-frost-layouts .lab-help-tabs button[aria-selected=true]{color:var(--lb-accent);border-bottom-color:var(--lb-accent)}
+#lab-frost-layouts .lab-help-intro{font-size:13px;margin:0 0 14px}
+#lab-frost-layouts .lab-indicator-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px}
+#lab-frost-layouts .lab-indicator-table th{text-align:left;color:var(--lb-muted);font-weight:400}
+#lab-frost-layouts .lab-indicator-table th,#lab-frost-layouts .lab-indicator-table td{padding:9px 8px;border-bottom:1px solid var(--lb-line);vertical-align:top}
+#lab-frost-layouts .lab-indicator-table td:first-child{color:var(--lb-accent);font-family:LABBattle!important;font-size:16px}
+#lab-frost-layouts .lab-indicator-table td:nth-child(2){min-width:120px}
+#lab-frost-layouts .lab-help-intro code,#lab-frost-layouts [data-help-panel] .lab-small code{color:var(--lb-accent)}
+#lab-frost-layouts button:focus-visible,#lab-frost-layouts select:focus-visible{outline:2px solid var(--lb-accent);outline-offset:3px}
+
+#lab-frost-layouts [data-feature-status="tint"]{display:inline;font-size:10px;margin-left:8px;color:var(--lb-muted)}
+#lab-frost-layouts [data-feature-status]{overflow-wrap:anywhere}
+
+#lab-frost-layouts .lab-sign-option{display:flex;align-items:center;gap:5px;font-size:11px;line-height:20px;white-space:nowrap;color:var(--lb-muted);margin-top:2px;cursor:pointer}
+#lab-frost-layouts .lab-sign-option input{width:13px;height:13px;margin:0;accent-color:var(--lb-accent);cursor:pointer}

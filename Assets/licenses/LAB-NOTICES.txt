@@ -1,0 +1,12 @@
+LAB attribution
+
+Selected native HUD, tint, input protection, metadata and telemetry code derives from DESRU-Enhanced by IlyaTsyganov and the original DESRU by bowsr (GPL-3.0).
+https://github.com/IlyaTsyganov/DESRU-Enhanced
+https://github.com/bowsr/DESRU
+
+The Vulkan lighting barrier correction is adapted from billymooreq (MIT); see doomfix-MIT.txt.
+https://github.com/billymooreq/DoomEternal-v1.1--RTXFix
+
+Native game font and layout reflection references originate in meath00k by brongo and contributors. No meath00k DLL or cheat/trainer features are bundled.
+
+The original Eternal typefaces and logo remain property of their owners. LAB is unofficial and is not endorsed by id Software or Bethesda. WebView2 retains its included notices; see WebView2-LICENSE.txt.

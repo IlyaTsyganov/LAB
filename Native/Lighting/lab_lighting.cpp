@@ -30,7 +30,20 @@ bool supportedImage(){
 bool enabled(){
     ULONGLONG now=GetTickCount64(),next=nextRead.load();if(now>=next&&nextRead.compare_exchange_strong(next,now+200)){
         wchar_t opt[4]{};bool value=GetEnvironmentVariableW(L"LAB_LIGHTING_FIX",opt,4)==1&&opt[0]==L'1';
-        wchar_t path[32768]{};DWORD n=GetEnvironmentVariableW(L"LAB_DATA_DIRECTORY",path,32768);if(n>0&&n<32768){std::wstring file=std::wstring(path)+L"\\lighting.ini";value=value&&GetPrivateProfileIntW(L"Lighting",L"Enabled",1,file.c_str())!=0;}requested=value;
+        wchar_t path[32768]{};DWORD n=GetEnvironmentVariableW(L"LAB_DATA_DIRECTORY",path,32768);bool live=false;
+        if(n>0&&n<32768){
+            std::wstring file=std::wstring(path)+L"\\lighting.ini";
+            value=value&&GetPrivateProfileIntW(L"Lighting",L"Enabled",0,file.c_str())!=0;
+            DWORD pid=GetPrivateProfileIntW(L"Lighting",L"OwnerPid",0,file.c_str());wchar_t started[32]{};
+            GetPrivateProfileStringW(L"Lighting",L"OwnerStarted",L"0",started,32,file.c_str());
+            HANDLE owner=pid?OpenProcess(SYNCHRONIZE|PROCESS_QUERY_LIMITED_INFORMATION,FALSE,pid):nullptr;
+            if(owner){FILETIME creation{},exit{},kernel{},user{};ULARGE_INTEGER identity{};
+                if(GetProcessTimes(owner,&creation,&exit,&kernel,&user)){identity.LowPart=creation.dwLowDateTime;identity.HighPart=creation.dwHighDateTime;live=WaitForSingleObject(owner,0)==WAIT_TIMEOUT&&identity.QuadPart==_wcstoui64(started,nullptr,10);}
+                CloseHandle(owner);
+            }
+        }requested=value&&live;
+        static HANDLE status=CreateEventW(nullptr,TRUE,FALSE,(L"Local\\LAB.Lighting.Active."+std::to_wstring(GetCurrentProcessId())).c_str());
+        if(status){if(requested.load())SetEvent(status);else ResetEvent(status);}
     }return requested.load();
 }
 std::shared_ptr<Device> deviceFor(VkCommandBuffer command){std::lock_guard<std::recursive_mutex> lock(gate);auto i=devices.find(key(command));return i==devices.end()?nullptr:i->second;}
