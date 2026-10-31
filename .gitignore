@@ -1,0 +1,11 @@
+bin/
+obj/
+publish/
+artifacts/
+Native/Lighting/*.dll
+Tests/bin/
+Tests/obj/
+Tests/output/
+.tools/
+*.user
+*.log

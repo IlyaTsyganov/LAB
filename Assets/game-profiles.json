@@ -1,0 +1,233 @@
+[
+  {
+    "Name": "1.0 (Release)",
+    "ModuleSize": 510681088,
+    "MD5": "7ea73e0ee1a2066dc43502930ededced",
+    "Velocity": 80202248,
+    "GPUVendor": 95960000,
+    "MaxHz": 64044640,
+    "IsLoading": 80812760,
+    "IsLoading2": 100995648,
+    "IsInGame": 101892568
+  },
+  {
+    "Name": "1.1",
+    "ModuleSize": 492113920,
+    "MD5": "70426fc580f2c064cb618317fd1a9d5e",
+    "Velocity": 80143112,
+    "GPUVendor": 95900880,
+    "MaxHz": 64509792,
+    "IsLoading": 80753624,
+    "IsLoading2": 100936512,
+    "IsInGame": 100626136
+  },
+  {
+    "Name": "2.0",
+    "ModuleSize": 490299392,
+    "MD5": "53b98af0cb0e3ffe9019ac62bad83703",
+    "Velocity": 0,
+    "GPUVendor": 99565408,
+    "MaxHz": 65012848,
+    "IsLoading": 54933144,
+    "IsLoading2": 84418216,
+    "IsInGame": 104294248
+  },
+  {
+    "Name": "2.1",
+    "ModuleSize": 505344000,
+    "MD5": "4fd80156710af0b0bd5d8a648e209f9b",
+    "Velocity": 0,
+    "GPUVendor": 99577440,
+    "MaxHz": 65025264,
+    "IsLoading": 84430632,
+    "IsLoading2": 104616600,
+    "IsInGame": 104306280
+  },
+  {
+    "Name": "3.0",
+    "ModuleSize": 475557888,
+    "MD5": "c03c73dbd60683e3bf157a362e5da16e",
+    "Velocity": 0,
+    "GPUVendor": 102294736,
+    "MaxHz": 66859648,
+    "IsLoading": 86490264,
+    "IsLoading2": 107568344,
+    "IsInGame": 107249440
+  },
+  {
+    "Name": "3.1",
+    "ModuleSize": 504107008,
+    "MD5": "3c770f56d3c148b648ee1d294e288e1c",
+    "Velocity": 85871576,
+    "GPUVendor": 102294864,
+    "MaxHz": 66859776,
+    "IsLoading": 86490392,
+    "IsLoading2": 107568472,
+    "IsInGame": 107249568
+  },
+  {
+    "Name": "4.0",
+    "ModuleSize": 478056448,
+    "MD5": "88da87233f2b02fb5086de9296ea2440",
+    "Velocity": 0,
+    "GPUVendor": 102022896,
+    "MaxHz": 66399248,
+    "IsLoading": 86048120,
+    "IsLoading2": 107678600,
+    "IsInGame": 107368592
+  },
+  {
+    "Name": "4.1",
+    "ModuleSize": 472821760,
+    "MD5": "c2b429b2eb398f836dd10d22944b9c76",
+    "Velocity": 85428984,
+    "GPUVendor": 102022896,
+    "MaxHz": 66399248,
+    "IsLoading": 86048120,
+    "IsLoading2": 107681672,
+    "IsInGame": 107371664
+  },
+  {
+    "Name": "5.0",
+    "ModuleSize": 475787264,
+    "MD5": "96556f8b0dfc56111090a6b663969b86",
+    "Velocity": 82457688,
+    "GPUVendor": 98847712,
+    "MaxHz": 67678112,
+    "IsLoading": 82860232,
+    "IsLoading2": 104490256,
+    "IsInGame": 104183920
+  },
+  {
+    "Name": "5.1",
+    "ModuleSize": 459132928,
+    "MD5": "6ae01a116b0683443002f93b7f32ba73",
+    "Velocity": 82457688,
+    "GPUVendor": 98847712,
+    "MaxHz": 67678112,
+    "IsLoading": 82860232,
+    "IsLoading2": 104490256,
+    "IsInGame": 104183920
+  },
+  {
+    "Name": "6.0",
+    "ModuleSize": 481435648,
+    "MD5": "56961731a6d153b133842856ea36edea",
+    "Velocity": 0,
+    "GPUVendor": 102907416,
+    "MaxHz": 69547504,
+    "IsLoading": 83934872,
+    "IsLoading2": 108542096,
+    "IsInGame": 108231408
+  },
+  {
+    "Name": "6.1",
+    "ModuleSize": 465915904,
+    "MD5": "7ce1b2029a94b7bfe1ec4bd76b9cf6a1",
+    "Velocity": 0,
+    "GPUVendor": 102907416,
+    "MaxHz": 69547504,
+    "IsLoading": 83934872,
+    "IsLoading2": 108542096,
+    "IsInGame": 108231408
+  },
+  {
+    "Name": "6.2",
+    "ModuleSize": 464543744,
+    "MD5": "dd75e40d9dba5a95708a0e4f625a96af",
+    "Velocity": 83537832,
+    "GPUVendor": 102917016,
+    "MaxHz": 69557104,
+    "IsLoading": 83944472,
+    "IsLoading2": 108551696,
+    "IsInGame": 108241872
+  },
+  {
+    "Name": "6.3",
+    "ModuleSize": 483786752,
+    "MD5": "9e9013ae3481e963a5fc3a049a8a1542",
+    "Velocity": 83537832,
+    "GPUVendor": 102917016,
+    "MaxHz": 69557104,
+    "IsLoading": 83944472,
+    "IsLoading2": 108551696,
+    "IsInGame": 108241872
+  },
+  {
+    "Name": "6.4",
+    "ModuleSize": 494395392,
+    "MD5": "8829459d8270a69e78b1797eb8785227",
+    "Velocity": 83537832,
+    "GPUVendor": 102917016,
+    "MaxHz": 69557104,
+    "IsLoading": 83944472,
+    "IsLoading2": 108551696,
+    "IsInGame": 108241872
+  },
+  {
+    "Name": "6.66 Rev 2",
+    "ModuleSize": 510251008,
+    "MD5": "b2d372b0a193bd6d7712630850d4bad3",
+    "Velocity": 85528488,
+    "GPUVendor": 104842104,
+    "MaxHz": 71522192,
+    "IsLoading": 85935128,
+    "IsLoading2": 110478480,
+    "IsInGame": 110163728
+  },
+  {
+    "Name": "6.66 Rev 2.2",
+    "ModuleSize": 121769984,
+    "MD5": "d393f99a3bddce792234db163dfe6035",
+    "Velocity": 85348136,
+    "GPUVendor": 104661752,
+    "MaxHz": 71341840,
+    "IsLoading": 85754776,
+    "IsLoading2": 110298128,
+    "IsInGame": 109987952
+  },
+  {
+    "Name": "6.66 Rev 2.2 (Gamepass)",
+    "ModuleSize": 122580992,
+    "MD5": "cantcheckmd5onuwpclients",
+    "Velocity": 86117416,
+    "GPUVendor": 105432312,
+    "MaxHz": 72111120,
+    "IsLoading": 86524056,
+    "IsLoading2": 111068688,
+    "IsInGame": 110753808
+  },
+  {
+    "Name": "6.66 Rev 3",
+    "ModuleSize": 121950208,
+    "MD5": "0c3f5a94244023ae2c55d6ff0b62e1ab",
+    "Velocity": 73237352,
+    "GPUVendor": 107399896,
+    "MaxHz": 74079840,
+    "IsLoading": 88492952,
+    "IsLoading2": 71305776,
+    "IsInGame": 112726192
+  },
+  {
+    "Name": "6.66 Rev 3.1",
+    "ModuleSize": 121806848,
+    "MD5": "baa2815a445bfdc8784c7bd62f78d291",
+    "Velocity": 88140200,
+    "GPUVendor": 107453208,
+    "MaxHz": 74133968,
+    "IsLoading": 88546840,
+    "IsLoading2": 71357088,
+    "IsInGame": 112777880
+  },
+  {
+    "Name": "6.66 Rev 3.2",
+    "ModuleSize": 121835520,
+    "MD5": "382a4d5bb648b56f9cd9194b5e0be348",
+    "Velocity": 88161832,
+    "GPUVendor": 107474840,
+    "MaxHz": 74155600,
+    "IsLoading": 88568472,
+    "IsLoading2": 71378592,
+    "IsInGame": 112799512
+  }
+]

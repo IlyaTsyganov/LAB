@@ -1,0 +1,25 @@
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111b22;color-scheme:dark}
+body,#lab-frost-layouts{font-family:LABUI}
+#lab-frost-layouts .lab-app{height:100vh;min-height:0}
+#lab-frost-layouts .lab-header,#lab-frost-layouts .lab-footer{flex-shrink:0}
+#lab-frost-layouts .lab-content{overflow:auto;min-height:0}
+#lab-frost-layouts .lab-header{app-region:drag;-webkit-app-region:drag}
+#lab-frost-layouts .window-actions{app-region:no-drag;-webkit-app-region:no-drag}
+#lab-frost-layouts .lab-inline-head,#lab-frost-layouts .lab-inline-row{grid-template-columns:minmax(120px,1.4fr) 46px minmax(60px,1fr) minmax(60px,1fr) 72px 64px;gap:14px}
+#lab-frost-layouts .lab-inline-row .lab-field{min-width:0}
+#lab-frost-layouts .lab-color-button{height:38px;width:100%;min-width:0;padding:6px;background:var(--lb-bg);border:1px solid var(--lb-line);border-radius:0}
+#lab-frost-layouts .lab-color-button span{display:block!important;height:100%;width:100%;background:var(--meter-color);margin:0!important}
+#lab-frost-layouts .lab-folder-icon{display:block;width:14px;height:10px;border:1px solid currentColor;border-radius:1px;position:relative;margin-top:3px}
+#lab-frost-layouts .lab-folder-icon:before{content:'';position:absolute;top:-4px;left:-1px;width:6px;height:4px;border:1px solid currentColor;border-bottom:0;background:var(--lb-panel)}
+#lab-frost-layouts .lab-color-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:15px}
+#lab-frost-layouts .lab-dialog-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:22px}
+#lab-frost-layouts .lab-dialog-text{font-size:14px;white-space:pre-wrap;margin:0;color:var(--lb-text)}
+#lab-frost-layouts .lab-modal-shade{padding-top:110px;overflow:auto}
+#lab-frost-layouts .lab-modal h2{font-family:LABBattle!important}
+#lab-frost-layouts .lab-inline-panel{margin-bottom:18px}
+#lab-frost-layouts .lab-meter-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+#lab-frost-layouts .lab-meter-heading h2{margin:0}
+#lab-frost-layouts .lab-master-toggle{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--lb-muted)}
+#lab-frost-layouts [data-launch]:disabled{opacity:.45;filter:none}
+@media(max-width:800px){#lab-frost-layouts .lab-inline-head,#lab-frost-layouts .lab-inline-row{grid-template-columns:minmax(100px,1.4fr) 36px minmax(48px,1fr) minmax(48px,1fr) 60px 48px;gap:10px}}
+@media(max-width:600px){#lab-frost-layouts .lab-inline-row{grid-template-columns:repeat(2,minmax(0,1fr))}#lab-frost-layouts .lab-inline-row>.lab-meter-name{grid-column:1}#lab-frost-layouts .lab-inline-row>.lab-switch{grid-column:2}#lab-frost-layouts .lab-inline-row .lab-field>span{display:block}#lab-frost-layouts .lab-modal-shade{padding:65px 12px 20px}}
