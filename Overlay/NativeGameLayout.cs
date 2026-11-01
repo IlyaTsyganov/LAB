@@ -8,6 +8,10 @@ namespace Lab.Overlay {
     internal sealed record NativeGameLayout(int ImageSize, int HudSlot, int Render, int Draw, int Width, int Height,
         int Print, int CommandGlobal, int GlyphWidth, int GlyphHeight, int GroundPlaneFromVelocity) {
         public NativeTintLayout? Tint { get; init; }
+        public NativeCvarLayout? Cvars { get; init; }
+        public string? CvarsFailure { get; init; }
+        public NativePlayerCheatLayout? PlayerCheats { get; init; }
+        public string? PlayerCheatsFailure { get; init; }
         public string? TintFailure { get; init; }
         public NativeModbotInputLayout? ModbotInput { get; init; }
         public string? ModbotInputFailure { get; init; }
@@ -268,6 +272,8 @@ namespace Lab.Overlay {
                     }
                 return Unique(found, type + "." + field + (setter ? " setter" : " getter"));
             }
+            private NativePlayerCheatFlag PlayerCheatFlag(string field) =>
+                NativePlayerCheatFlag.Decode(Bytes.Slice(Offset(PropertyAccessor("idPlayer", field, false)), 16));
             private int EnumValue(string type, string value) {
                 var found = new List<int>();
                 foreach(int name in Find(Encoding.ASCII.GetBytes(type + "\0"))) {
@@ -351,6 +357,23 @@ namespace Lab.Overlay {
                     throw new NotSupportedException("Resolved game layout contains invalid code or data addresses");
                 try { layout = layout with { Tint = ResolveTint() }; }
                 catch(NotSupportedException e) { layout = layout with { TintFailure = e.Message }; }
+                try {
+                    var cvars = new NativeCvarLayout(
+                        layout.CommandGlobal + Field("engine_t", "cvarSystemForTransfer") - Field("engine_t", "cmdSystemForTransfer"),
+                        Unique(Metadata("idCVar::cvarData_t").Select(m => m.Size), "cvar data size"),
+                        Field("idCVar::cvarData_t", "valueString"), Field("idCVar::cvarData_t", "valueInteger"), Field("idCVar::cvarData_t", "valueFloat"),
+                        Field("idCVar::cvarData_t", "name"), Field("idCVar::cvarData_t", "resetString"), Field("idCVar::cvarData_t", "flags"),
+                        EnumValue("cvarFlags_t", "CVAR_CHEAT"), EnumValue("cvarFlags_t", "CVAR_NOCHEAT"),
+                        EnumValue("cvarFlags_t", "CVAR_ROM"), EnumValue("cvarFlags_t", "CVAR_INIT"), EnumValue("cvarFlags_t", "CVAR_SHIPPINGDISABLED"));
+                    if(!InImage(cvars.SystemGlobal) || cvars.DataSize is < 24 or > 4096 ||
+                        new[] { cvars.ValueString, cvars.Name, cvars.Reset }.Any(offset => offset < 0 || offset > cvars.DataSize - 8) ||
+                        cvars.Flags < 0 || cvars.Flags > cvars.DataSize - 4)
+                        throw new NotSupportedException("Invalid cvar registry metadata");
+                    layout = layout with { Cvars = cvars };
+                } catch(NotSupportedException e) { layout = layout with { CvarsFailure = e.Message }; }
+                try {
+                    layout = layout with { PlayerCheats = new(PlayerCheatFlag("noClip"), PlayerCheatFlag("noTarget"), PlayerCheatFlag("godMode")) };
+                } catch(NotSupportedException e) { layout = layout with { PlayerCheatsFailure = e.Message }; }
                 try { layout = layout with { ModbotInput = ResolveModbotInput() }; }
                 catch(NotSupportedException e) { layout = layout with { ModbotInputFailure = e.Message }; }
                   try { layout = layout with { Metrics = ResolveMetrics() }; }
