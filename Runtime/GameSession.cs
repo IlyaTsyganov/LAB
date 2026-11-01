@@ -7,6 +7,8 @@ internal sealed class GameSession:IDisposable
 {
     private readonly Process _game;private readonly GameReader _reader;private readonly SpeedSampler _sampler;private readonly NativeSpeedometer _hud;private readonly PerformanceMetrics? _metrics;
     private NativeModbotInputGuard? _modbot;private readonly NativeAttachRetry _modbotRetry=new();private string? _modbotFailure;
+    private readonly ProtectedCvarSampler? _cvars;
+    private readonly PlayerCheatMonitor? _playerCheats;
     internal FeatureStatus? Features {get;private set;}
     internal string Version {get;}
     internal int Pid=>_game.Id;
@@ -15,6 +17,17 @@ internal sealed class GameSession:IDisposable
     {
         _game=game;var p=profile??GameProfile.Resolve(game.MainModule!.FileName);Version=p.Name;_reader=new(game,p);_hud=NativeSpeedometer.Attach(game);_sampler=new(game);
         try{if(p.Metrics==0)throw new NotSupportedException("Missing metrics profile");_metrics=PerformanceMetrics.Attach(game,_hud.Layout,p.Metrics);}catch(Exception e){Log.Warning(e,"Performance metrics unavailable");}
+        if(_metrics is not null) {
+            if(_hud.Layout.PlayerCheats is {} playerCheats) _playerCheats = new(game, playerCheats);
+            else Log.Warning("Player cheat state unavailable", _hud.Layout.PlayerCheatsFailure ?? "Missing player cheat metadata");
+            if(_hud.Layout.Cvars is {} cvars) {
+                try {
+                    var monitor = new ProtectedCvarMonitor(game, cvars);
+                    _cvars = new(monitor, new CheatCvarSession(game, _hud.State, monitor));
+                } catch(Exception e) { Log.Warning(e, "Cheat cvar session unavailable; other LAB features remain active"); }
+            }
+            else Log.Warning("Cheat cvar monitor unavailable", _hud.Layout.CvarsFailure ?? "Missing cvar metadata");
+        }
     }
     internal bool Tick(SettingsStore store)
     {
@@ -33,17 +46,23 @@ internal sealed class GameSession:IDisposable
         _modbot?.Update(settings.ModbotFix&&maxHz is >0 and <1000);
         // Letters report the selected preferences. Native availability and standby
         // conditions are reported separately in the UI instead of hiding letters.
-        _metrics?.Update(settings);
+        // These commands toggle packed idPlayer bits and need no cvar argument.
+        // Read actual state after filtering cvars, so even pre-existing player
+        // cheats remain visible independently of the cvar session baseline.
+        var cvars = _cvars?.Snapshot ?? Array.Empty<CvarDifference>();
+        var playerCheats = _playerCheats?.Read(active ? player : IntPtr.Zero) ?? default;
+        _metrics?.Update(settings,playerCheats.AddTo(cvars),_hud.GlyphHeight);
         Features=FeatureStatus.Describe(settings,Version,_reader.DriverName,GameLauncher.LightingActive(_game.Id),_modbot is not null,maxHz,_modbotFailure,_hud.TintAttached);
         return changed;
     }
-    public void Dispose(){try{_modbot?.Dispose();}finally{try{_sampler.Dispose();}finally{try{_metrics?.Dispose();}finally{_hud.Dispose();}}}}
+    public void Dispose(){try{_cvars?.Dispose();}finally{try{_modbot?.Dispose();}finally{try{_sampler.Dispose();}finally{try{_metrics?.Dispose();}finally{_hud.Dispose();}}}}}
     [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")]private static extern uint GetWindowThreadProcessId(IntPtr hwnd,out uint pid);
 }
 internal sealed class GameMonitor:IDisposable
 {
     private readonly SettingsStore _store;
+    private readonly Func<string,Process?> _findGame;
     private readonly CancellationTokenSource _stop=new();
     private readonly Task _worker;
     private readonly bool _preview;
@@ -60,9 +79,9 @@ internal sealed class GameMonitor:IDisposable
     internal bool LaunchPending {get{lock(_launchGate)return _launchPending;}}
     internal FeatureStatus? Features {get;private set;}
 
-    internal GameMonitor(SettingsStore store,bool preview,DateTime? startedUtc=null)
+    internal GameMonitor(SettingsStore store,bool preview,DateTime? startedUtc=null,Func<string,Process?>? findGame=null)
     {
-        _store=store;_preview=preview;
+        _store=store;_preview=preview;_findGame=findGame??FindGame;
         using var owner=Process.GetCurrentProcess();
         _startedUtc=startedUtc??owner.StartTime.ToUniversalTime();
         _worker=Task.Run(Run);
@@ -126,7 +145,7 @@ internal sealed class GameMonitor:IDisposable
                         CloseAdapter(ref session);CloseAdapter(ref notice);game.Dispose();game=null;profile=null;detectAt=0;attachAt=0;
                     }
                     if(!_preview&&game is null&&now>=detectAt){
-                        detectAt=now+1000;game=FindGame(selectedPath);
+                        detectAt=now+1000;game=_findGame(selectedPath);
                         if(game is not null){
                             observedPath=selectedPath;version="unknown";profile=null;
                             preexisting=game.StartTime.ToUniversalTime()<_startedUtc;
@@ -138,24 +157,16 @@ internal sealed class GameMonitor:IDisposable
                     Connected=!_preview&&game is not null&&Alive(game);
                     if(Connected){
                         CancelLaunch();
-                        if(preexisting&&!launchedByLab&&now>=identityAt){
+                        if(!launchedByLab&&now>=identityAt){
                             identityAt=now+1000;launchedByLab=GameLauncher.WasLaunchedByLab(game!,_store);
                         }
-                        RequiresRestart=preexisting&&!launchedByLab;
+                        RequiresRestart=!launchedByLab;
                         if(RequiresRestart){
                             CloseAdapter(ref session);
                             if(lastGate!=false){GameLauncher.WriteLightingControl(_store,false);lastGate=false;}
-                            if(notice is null&&profile is not null&&now>=attachAt){
-                                attachAt=now+3000;
-                                try{
-                                    var layout=NativeGameLayout.Resolve(observedPath);
-                                    notice=PerformanceMetrics.Attach(game!,layout,profile.Metrics);
-                                }catch(Exception e){Log.Warning(e,"Restart notice initialization");}
-                            }
-                            if(notice is not null){
-                                try{notice.UpdateRestartNotice();}
-                                catch(Exception e){Log.Warning(e,"Restart notice");CloseAdapter(ref notice);attachAt=now+1000;}
-                            }
+                            // An externally launched game is observed only; even
+                            // the restart notice must not install an in-game hook.
+                            CloseAdapter(ref notice);
                             Features=FeatureStatus.Restart;
                         }else{
                             CloseAdapter(ref notice);

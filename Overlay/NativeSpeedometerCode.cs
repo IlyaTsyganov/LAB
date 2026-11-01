@@ -9,6 +9,8 @@ namespace Lab.Overlay {
         internal const int MailboxOffset = 1536, MailboxStride = 160, NamesOffset = 3072;
         internal static readonly int[] ReadingOffsets = {64, 128, 512};
         internal const int StateSize = 8192, CallbackStart = 0x800, CallbackStride = 0x200;
+        // Persistent cvar baseline belongs to this LAB HUD session.
+        internal const int CvarSessionPointerOffset = StateSize - 8;
         internal const string Magic = "LABHUD02", LegacyMagic = "LABHUD01";
         internal const int ConsoleReadyOffset = 768, ConsoleFormatOffset = 772, ConsoleTextOffset = 784, ConsoleTextCapacity = 576;
 

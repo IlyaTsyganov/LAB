@@ -1,5 +1,25 @@
 [
   {
+    "Name": "6.66",
+    "ModuleSize": 508350464,
+    "MD5": "8e4462adcc44dc89287f687939a96af3",
+    "Velocity": 0,
+    "GPUVendor": 0,
+    "MaxHz": 71131440,
+    "IsLoading": 0,
+    "IsLoading2": 0,
+    "IsInGame": 0,
+    "Metrics": 71122288,
+    "NativePlayer": {
+      "GameSystem": 60199992,
+      "Vtable": 48278480,
+      "MapPlayer": 6904,
+      "Hud": 291544,
+      "Menus": 912,
+      "Paused": 996
+    }
+  },
+  {
     "Name": "1.0 (Release)",
     "ModuleSize": 510681088,
     "MD5": "7ea73e0ee1a2066dc43502930ededced",
@@ -33,7 +53,15 @@
     "IsLoading": 54933144,
     "IsLoading2": 84418216,
     "IsInGame": 104294248,
-    "Metrics": 65003696
+    "Metrics": 65003696,
+    "NativePlayer": {
+      "GameSystem": 54941440,
+      "Vtable": 43898864,
+      "MapPlayer": 6872,
+      "Hud": 224792,
+      "Menus": 856,
+      "Paused": 940
+    }
   },
   {
     "Name": "2.1",
@@ -45,7 +73,15 @@
     "IsLoading": 84430632,
     "IsLoading2": 104616600,
     "IsInGame": 104306280,
-    "Metrics": 65016112
+    "Metrics": 65016112,
+    "NativePlayer": {
+      "GameSystem": 54953736,
+      "Vtable": 43908728,
+      "MapPlayer": 6872,
+      "Hud": 223792,
+      "Menus": 856,
+      "Paused": 940
+    }
   },
   {
     "Name": "3.0",
@@ -57,7 +93,15 @@
     "IsLoading": 86490264,
     "IsLoading2": 107568344,
     "IsInGame": 107249440,
-    "Metrics": 66850496
+    "Metrics": 66850496,
+    "NativePlayer": {
+      "GameSystem": 56505016,
+      "Vtable": 45422304,
+      "MapPlayer": 6904,
+      "Hud": 226536,
+      "Menus": 880,
+      "Paused": 964
+    }
   },
   {
     "Name": "3.1",
@@ -69,7 +113,15 @@
     "IsLoading": 86490392,
     "IsLoading2": 107568472,
     "IsInGame": 107249568,
-    "Metrics": 66850624
+    "Metrics": 66850624,
+    "NativePlayer": {
+      "GameSystem": 56505016,
+      "Vtable": 45422320,
+      "MapPlayer": 6904,
+      "Hud": 226536,
+      "Menus": 880,
+      "Paused": 964
+    }
   },
   {
     "Name": "4.0",
@@ -81,7 +133,15 @@
     "IsLoading": 86048120,
     "IsLoading2": 107678600,
     "IsInGame": 107368592,
-    "Metrics": 66390096
+    "Metrics": 66390096,
+    "NativePlayer": {
+      "GameSystem": 56054088,
+      "Vtable": 45010408,
+      "MapPlayer": 6904,
+      "Hud": 226272,
+      "Menus": 880,
+      "Paused": 964
+    }
   },
   {
     "Name": "4.1",
@@ -93,7 +153,15 @@
     "IsLoading": 86048120,
     "IsLoading2": 107681672,
     "IsInGame": 107371664,
-    "Metrics": 66390096
+    "Metrics": 66390096,
+    "NativePlayer": {
+      "GameSystem": 56054088,
+      "Vtable": 45010656,
+      "MapPlayer": 6904,
+      "Hud": 226272,
+      "Menus": 880,
+      "Paused": 964
+    }
   },
   {
     "Name": "5.0",
@@ -105,7 +173,15 @@
     "IsLoading": 82860232,
     "IsLoading2": 104490256,
     "IsInGame": 104183920,
-    "Metrics": 67668960
+    "Metrics": 67668960,
+    "NativePlayer": {
+      "GameSystem": 57133248,
+      "Vtable": 45897256,
+      "MapPlayer": 6904,
+      "Hud": 290008,
+      "Menus": 904,
+      "Paused": 988
+    }
   },
   {
     "Name": "5.1",
