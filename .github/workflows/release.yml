@@ -32,7 +32,7 @@ jobs:
         shell: pwsh
         run: |
           $version=([xml](Get-Content -LiteralPath lab.csproj -Raw)).Project.PropertyGroup.Version
-          if($version -notmatch '^\d+\.\d+\.\d+$'){throw 'Expected a three-part release version.'}
+          if($version -notmatch '^\d+\.\d+(?:\.\d+)?$'){throw 'Expected a two- or three-part release version.'}
           if(!(Test-Path -LiteralPath "docs/release-$version.md")){throw 'Release notes are missing.'}
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Build and validate Windows package

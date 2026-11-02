@@ -1,6 +1,6 @@
 # LAB
 
-LAB is a focused DOOM Eternal utility with a UAC Frost interface, the original red emblem and the bundled Eternal typefaces. All application text is English. LAB Plus remains a separate application.
+LAB is a focused DOOM Eternal utility with a UAC Frost interface, the original red emblem and the bundled Eternal typefaces. All application text is English.
 
 ![LAB UAC Frost interface](docs/interface.png)
 
@@ -10,7 +10,7 @@ Extract the complete archive and open `LAB.exe`. Windows x64, .NET 10 Desktop Ru
 
 The status line uses only **Game not running**, **Running <version>** and **Restart game**; technical connection details are logged. **Launch game** disables immediately on click, remains disabled while the selected process is running, and becomes available again after a failed launch or game exit.
 
-Keep LAB open for live HUD updates, console settings, tint control and Q/E protection. Preferences are saved in `%LOCALAPPDATA%\lab\settings.json`, independently of LAB Plus. `LAB_DATA_DIRECTORY` may override this with an absolute directory. Logs are written to `logs/lab.log` next to `LAB.exe`. Changing the settings directory does not relocate logs.
+Keep LAB open for live HUD updates, console settings, tint control and Q/E protection. Preferences are saved in `%LOCALAPPDATA%\lab\settings.json`. `LAB_DATA_DIRECTORY` may override this with an absolute directory. Logs are written to `logs/lab.log` next to `LAB.exe`. Changing the settings directory does not relocate logs.
 
 ## First-run defaults
 
@@ -34,7 +34,7 @@ On the first run, LAB checks `C:\Program Files (x86)\Steam\steamapps\common\DOOM
 
 Native Modbot attachment retries temporary initialization failures instead of permanently giving up after its first attempt. Unsupported layouts remain disabled.
 
-The UI includes three window presets: Mini (680×580), Compact (820×800, default), and Comfortable (920×860), selected in the footer. **Help** has separate **Indicators** and **Console commands** tabs. Compact uses slightly larger text and fields, with all main controls visible without scrolling. Mini and manually reduced windows retain scrolling so settings stay accessible. The UI contains no tint/HUD previews or invented live numbers. Window buttons use the LAB Plus geometry. The first visible window frame appears after local fonts, logo and WebView2 content are ready; the only native child is the WebView2 host.
+The UI includes three window presets: Mini (680×580), Compact (820×800, default), and Comfortable (920×860), selected in the footer. **Help** has separate **Indicators** and **Console commands** tabs. Compact uses slightly larger text and fields, with all main controls visible without scrolling. Mini and manually reduced windows retain scrolling so settings stay accessible. The UI contains no tint/HUD previews or invented live numbers. The first visible window frame appears after local fonts, logo and WebView2 content are ready; the only native child is the WebView2 host.
 
 ## Console commands
 
@@ -63,22 +63,22 @@ lab_speedometer_showvertical 1
 lab_lowhptintopacity 35
 ```
 
-Lighting Fix, Q/E protection and driver-line hiding are controlled by the LAB switches. No unrelated DESRU commands are registered. LAB supports coexistence with the upstream DESRU metrics controls. LAB Plus remains a separate application; foreign HUD hooks are detected and retained rather than overwritten.
+Lighting Fix, Q/E protection and driver-line hiding are controlled by the LAB switches. No unrelated DESRU commands are registered. LAB supports coexistence with the upstream DESRU metrics controls. Foreign HUD hooks are detected and retained rather than overwritten.
 
 ## Compatibility and validation
 
 Telemetry uses exact executable hashes from `Assets/game-profiles.json`; native HUD/input/tint layouts are independently resolved from the executable's metadata and checked against the loaded image. Unknown or modified builds are refused with an English status message. Per-feature metadata failures are reported, with original behavior retained.
 
-Automated checks execute the generated x64 metrics formatter, speedometer, command, input and both tint adapters. Metrics fixtures cover standalone FPS-only output, DESRU ordering, the original small font, AMD hiding, minimal metrics and shutdown/lease expiry. The port carries the 22 exact executable profiles audited in LAB Plus 0.8.21. Installed executable checks inspect files as data; they do not launch the game. Public lifecycle checks use a clearly named LAB test fixture. Native lighting lifetime fixtures cover normal close, abrupt owner termination and PID reuse. Live-game and visual acceptance testing of this build remains required. The 1 ms velocity worker is sampled telemetry; scheduling stalls can miss an exceptionally short landing impulse.
+Automated checks execute the generated x64 metrics formatter, speedometer, command, input and both tint adapters. Metrics fixtures cover standalone FPS-only output, DESRU ordering, the original small font, AMD hiding, minimal metrics and shutdown/lease expiry. LAB recognizes 22 audited executable profiles. Installed executable checks inspect files as data; they do not launch the game. Public lifecycle checks use a clearly named LAB test fixture. Native lighting lifetime fixtures cover normal close, abrupt owner termination and PID reuse. Live-game and visual acceptance testing of this build remains required. The 1 ms velocity worker is sampled telemetry; scheduling stalls can miss an exceptionally short landing impulse.
 
-See [CREDITS.md](CREDITS.md), `LICENSE` and `Assets/licenses` for attribution.
+See `LICENSE` and `Assets/licenses` for attribution.
 
 ## Build locally
 
 Run `pwsh -File build.ps1 -Test` from the repository root with the .NET 10 SDK, PowerShell 7 and either Visual Studio C++ build tools or LLVM-MinGW. The build discovers the installed compiler; Vulkan headers are included under `third_party`.
 
-The script builds the lighting DLL and application, executes the native fixtures, and produces `artifacts/LAB.zip` plus its SHA-256 file. Extracting the ZIP creates one `LAB` folder; launch `LAB/LAB.exe`. CPU-only CI may add `-SkipVulkanProbe`; this still runs lighting math and ownership tests. The local runtime package is `artifacts/package-1.0.2/LAB`.
+The script builds the lighting DLL and application, executes the native fixtures, and produces `artifacts/LAB.zip` plus its SHA-256 file. Extracting the ZIP creates one `LAB` folder; launch `LAB/LAB.exe`. CPU-only CI may add `-SkipVulkanProbe`; this still runs lighting math and ownership tests. The local runtime package is `artifacts/package-1.1/LAB`.
 
-Packaging uses an explicit file list and validates the ZIP contents. The program archive includes runtime files, UI assets and component licenses. README.md, CREDITS.md, debug symbols, settings, populated logs, developer tools, source and documentation screenshots are excluded. Attribution remains available under `Assets/licenses` and in the repository.
+Packaging uses an explicit file list and validates the ZIP contents. The program archive includes runtime files, UI assets and component licenses. README.md, debug symbols, settings, populated logs, developer tools, source and documentation screenshots are excluded. Attribution remains available under `Assets/licenses` and in the repository.
 
 `LAB.exe --preview` starts an isolated design preview. `--qa-output <absolute-directory>` also checks UI controls, persistence, all window presets and Compact without scrolling, then closes. Run UI QA in the normal Windows user session.

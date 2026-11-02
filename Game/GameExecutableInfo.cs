@@ -6,7 +6,7 @@ internal sealed record GameExecutableInfo(string Version, bool NeedsLightingFix)
 {
     private readonly record struct Profile(string Version, int Timestamp, int ImageSize, int FingerprintRva, bool NeedsLightingFix = false);
 
-    // Audited executable identities shared with the LAB Plus patch adapters.
+    // Audited executable identities for the LAB patch adapters.
     // Read the selected EXE, never infer its version from the installation folder.
     private static readonly Profile[] Profiles =
     [

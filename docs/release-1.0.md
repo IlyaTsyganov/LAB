@@ -7,6 +7,6 @@
 - First-run defaults: speedometer master off; all individual meters on; vertical sign on; all meter sizes 3; red screen opacity 100%.
 - The first run checks C:\Program Files (x86)\Steam\steamapps\common\DOOMEternal\DOOMEternalx64vk.exe. An absent executable leaves the path empty for manual selection.
 - Closing LAB disables its live features. Lighting Fix retains its supported early-build/NVIDIA restriction, and Modbot retains its internal-FPS-limit condition.
-- Windows x64 ZIP checked against an explicit file list. It contains the application, required assets and component licenses; README.md, CREDITS.md, user settings, populated logs, debug symbols and developer files are excluded.
+- Windows x64 ZIP checked against an explicit file list. It contains the application, required assets and component licenses; README.md, user settings, populated logs, debug symbols and developer files are excluded.
 
 Requirements: Windows x64, .NET 10 Desktop Runtime and Microsoft Edge WebView2 Runtime. Extract the entire program archive before running lab.exe.
