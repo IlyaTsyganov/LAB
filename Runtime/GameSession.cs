@@ -7,8 +7,6 @@ internal sealed class GameSession:IDisposable
 {
     private readonly Process _game;private readonly GameReader _reader;private readonly SpeedSampler _sampler;private readonly NativeSpeedometer _hud;private readonly PerformanceMetrics? _metrics;
     private NativeModbotInputGuard? _modbot;private readonly NativeAttachRetry _modbotRetry=new();private string? _modbotFailure;
-    private readonly ProtectedCvarSampler? _cvars;
-    private readonly PlayerCheatMonitor? _playerCheats;
     internal FeatureStatus? Features {get;private set;}
     internal string Version {get;}
     internal int Pid=>_game.Id;
@@ -17,17 +15,7 @@ internal sealed class GameSession:IDisposable
     {
         _game=game;var p=profile??GameProfile.Resolve(game.MainModule!.FileName);Version=p.Name;_reader=new(game,p);_hud=NativeSpeedometer.Attach(game);_sampler=new(game);
         try{if(p.Metrics==0)throw new NotSupportedException("Missing metrics profile");_metrics=PerformanceMetrics.Attach(game,_hud.Layout,p.Metrics);}catch(Exception e){Log.Warning(e,"Performance metrics unavailable");}
-        if(_metrics is not null) {
-            if(_hud.Layout.PlayerCheats is {} playerCheats) _playerCheats = new(game, playerCheats);
-            else Log.Warning("Player cheat state unavailable", _hud.Layout.PlayerCheatsFailure ?? "Missing player cheat metadata");
-            if(_hud.Layout.Cvars is {} cvars) {
-                try {
-                    var monitor = new ProtectedCvarMonitor(game, cvars);
-                    _cvars = new(monitor, new CheatCvarSession(game, _hud.State, monitor));
-                } catch(Exception e) { Log.Warning(e, "Cheat cvar session unavailable; other LAB features remain active"); }
-            }
-            else Log.Warning("Cheat cvar monitor unavailable", _hud.Layout.CvarsFailure ?? "Missing cvar metadata");
-        }
+
     }
     internal bool Tick(SettingsStore store)
     {
@@ -46,16 +34,11 @@ internal sealed class GameSession:IDisposable
         _modbot?.Update(settings.ModbotFix&&maxHz is >0 and <1000);
         // Letters report the selected preferences. Native availability and standby
         // conditions are reported separately in the UI instead of hiding letters.
-        // These commands toggle packed idPlayer bits and need no cvar argument.
-        // Read actual state after filtering cvars, so even pre-existing player
-        // cheats remain visible independently of the cvar session baseline.
-        var cvars = _cvars?.Snapshot ?? Array.Empty<CvarDifference>();
-        var playerCheats = _playerCheats?.Read(active ? player : IntPtr.Zero) ?? default;
-        _metrics?.Update(settings,playerCheats.AddTo(cvars),_hud.GlyphHeight);
+        _metrics?.Update(settings);
         Features=FeatureStatus.Describe(settings,Version,_reader.DriverName,GameLauncher.LightingActive(_game.Id),_modbot is not null,maxHz,_modbotFailure,_hud.TintAttached);
         return changed;
     }
-    public void Dispose(){try{_cvars?.Dispose();}finally{try{_modbot?.Dispose();}finally{try{_sampler.Dispose();}finally{try{_metrics?.Dispose();}finally{_hud.Dispose();}}}}}
+    public void Dispose(){try{_modbot?.Dispose();}finally{try{_sampler.Dispose();}finally{try{_metrics?.Dispose();}finally{_hud.Dispose();}}}}
     [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")]private static extern uint GetWindowThreadProcessId(IntPtr hwnd,out uint pid);
 }

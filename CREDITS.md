@@ -4,4 +4,4 @@ LAB derives selected native HUD, tint, input protection, metadata and telemetry 
 
 The original Eternal typefaces and logo remain property of their owners. LAB is unofficial and is not endorsed by id Software or Bethesda. WebView2 retains its included notices.
 
-The LAB 1.0.2 patch profiles, launch ownership and metrics/cvar improvements are ported from [LAB Plus 0.8.21](https://github.com/IlyaTsyganov/LAB-Plus/tree/v0.8.21), retaining separate LAB branding, commands, runtime identifiers and preferences.
+The LAB 1.0.2 patch profiles, launch ownership and metrics improvements are ported from [LAB Plus 0.8.21](https://github.com/IlyaTsyganov/LAB-Plus/tree/v0.8.21), retaining separate LAB branding, commands, runtime identifiers and preferences.

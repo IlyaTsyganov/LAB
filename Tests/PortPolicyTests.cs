@@ -14,8 +14,8 @@ internal static class PortPolicyTests
             var layout=NativeGameLayout.Resolve(path);
             check(profile.Metrics!=0&&profile.MaxHz!=0&&profile.ModuleSize==layout.ImageSize,
                 "The exact installed executable has coherent metrics, tick and image-size profiles: "+profile.Name);
-            check(layout.Tint is not null&&layout.ModbotInput is not null&&layout.Cvars is not null&&layout.PlayerCheats is not null,
-                "Tint, Modbot, cvar and player-cheat layouts resolve: "+profile.Name);
+            check(layout.Tint is not null&&layout.ModbotInput is not null,
+                "Tint and Modbot layouts resolve: "+profile.Name);
             if(profile.Name is "2.0" or "2.1" or "3.0" or "3.1" or "4.0" or "4.1" or "5.0" or "6.66")
                 check(profile.NativePlayer is not null,"Newly ported builds use their audited native player chain: "+profile.Name);
             bool early=profile.Name is "1.0 (Release)" or "1.1" or "2.0";
