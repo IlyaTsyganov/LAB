@@ -88,7 +88,7 @@ try{
         if($names | Where-Object {!$_.StartsWith('LAB/',[StringComparison]::Ordinal)}){throw 'Release must contain only the LAB folder.'}
         if(!($files -ccontains 'LAB/LAB.exe')){throw 'LAB.exe is missing or has the wrong case.'}
         if(@(Compare-Object -CaseSensitive ($expected | Sort-Object) ($files | Sort-Object)).Count){throw 'Release archive contains missing or unexpected files.'}
-        if($names -match '(^|/)(README\.md|CREDITS\.md|settings\.json|[^/]+\.pdb|[^/]+\.log)$'){throw 'Release contains documentation, user data or debug output.'}
+        if($names -match '(^|/)(README\.md|settings\.json|[^/]+\.pdb|[^/]+\.log)$'){throw 'Release contains documentation, user data or debug output.'}
         $names | Set-Content -LiteralPath ($archive+'.contents.txt') -Encoding utf8
     }finally{$zip.Dispose()}
     $digest=Get-FileHash -LiteralPath $archive -Algorithm SHA256

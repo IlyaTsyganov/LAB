@@ -15,6 +15,7 @@ internal sealed class GameSession:IDisposable
     {
         _game=game;var p=profile??GameProfile.Resolve(game.MainModule!.FileName);Version=p.Name;_reader=new(game,p);_hud=NativeSpeedometer.Attach(game);_sampler=new(game);
         try{if(p.Metrics==0)throw new NotSupportedException("Missing metrics profile");_metrics=PerformanceMetrics.Attach(game,_hud.Layout,p.Metrics);}catch(Exception e){Log.Warning(e,"Performance metrics unavailable");}
+
     }
     internal bool Tick(SettingsStore store)
     {
@@ -44,6 +45,7 @@ internal sealed class GameSession:IDisposable
 internal sealed class GameMonitor:IDisposable
 {
     private readonly SettingsStore _store;
+    private readonly Func<string,Process?> _findGame;
     private readonly CancellationTokenSource _stop=new();
     private readonly Task _worker;
     private readonly bool _preview;
@@ -60,9 +62,9 @@ internal sealed class GameMonitor:IDisposable
     internal bool LaunchPending {get{lock(_launchGate)return _launchPending;}}
     internal FeatureStatus? Features {get;private set;}
 
-    internal GameMonitor(SettingsStore store,bool preview,DateTime? startedUtc=null)
+    internal GameMonitor(SettingsStore store,bool preview,DateTime? startedUtc=null,Func<string,Process?>? findGame=null)
     {
-        _store=store;_preview=preview;
+        _store=store;_preview=preview;_findGame=findGame??FindGame;
         using var owner=Process.GetCurrentProcess();
         _startedUtc=startedUtc??owner.StartTime.ToUniversalTime();
         _worker=Task.Run(Run);
@@ -126,7 +128,7 @@ internal sealed class GameMonitor:IDisposable
                         CloseAdapter(ref session);CloseAdapter(ref notice);game.Dispose();game=null;profile=null;detectAt=0;attachAt=0;
                     }
                     if(!_preview&&game is null&&now>=detectAt){
-                        detectAt=now+1000;game=FindGame(selectedPath);
+                        detectAt=now+1000;game=_findGame(selectedPath);
                         if(game is not null){
                             observedPath=selectedPath;version="unknown";profile=null;
                             preexisting=game.StartTime.ToUniversalTime()<_startedUtc;
@@ -138,24 +140,16 @@ internal sealed class GameMonitor:IDisposable
                     Connected=!_preview&&game is not null&&Alive(game);
                     if(Connected){
                         CancelLaunch();
-                        if(preexisting&&!launchedByLab&&now>=identityAt){
+                        if(!launchedByLab&&now>=identityAt){
                             identityAt=now+1000;launchedByLab=GameLauncher.WasLaunchedByLab(game!,_store);
                         }
-                        RequiresRestart=preexisting&&!launchedByLab;
+                        RequiresRestart=!launchedByLab;
                         if(RequiresRestart){
                             CloseAdapter(ref session);
                             if(lastGate!=false){GameLauncher.WriteLightingControl(_store,false);lastGate=false;}
-                            if(notice is null&&profile is not null&&now>=attachAt){
-                                attachAt=now+3000;
-                                try{
-                                    var layout=NativeGameLayout.Resolve(observedPath);
-                                    notice=PerformanceMetrics.Attach(game!,layout,profile.Metrics);
-                                }catch(Exception e){Log.Warning(e,"Restart notice initialization");}
-                            }
-                            if(notice is not null){
-                                try{notice.UpdateRestartNotice();}
-                                catch(Exception e){Log.Warning(e,"Restart notice");CloseAdapter(ref notice);attachAt=now+1000;}
-                            }
+                            // An externally launched game is observed only; even
+                            // the restart notice must not install an in-game hook.
+                            CloseAdapter(ref notice);
                             Features=FeatureStatus.Restart;
                         }else{
                             CloseAdapter(ref notice);
