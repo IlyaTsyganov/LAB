@@ -82,3 +82,7 @@ The script builds the lighting DLL and application, executes the native fixtures
 Packaging uses an explicit file list and validates the ZIP contents. The program archive includes runtime files, UI assets and component licenses. README.md, debug symbols, settings, populated logs, developer tools, source and documentation screenshots are excluded. Attribution remains available under `Assets/licenses` and in the repository.
 
 `LAB.exe --preview` starts an isolated design preview. `--qa-output <absolute-directory>` also checks UI controls, persistence, all window presets and Compact without scrolling, then closes. Run UI QA in the normal Windows user session.
+
+## Application updates
+
+The header shows the installed version beside LAB. At startup, LAB checks GitHub Releases for a newer stable version. The compact prompt uses the LAB colors, logo and typefaces. Choose Yes to update, No to continue, or Don't ask again for this version to skip that release. Offline starts and failed checks show no notification. Updates replace application files in the same folder, preserve preferences and logs, and restart LAB automatically.

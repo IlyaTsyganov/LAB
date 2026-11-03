@@ -30,7 +30,7 @@ internal sealed class LabHost:Form
         }catch(Exception ex){if(_closing)return;StartupError=true;Log.Error(ex,"Interface initialization failed");Close();}
     }
     private void Publish(string feedback="")
-    {if(_browser.CoreWebView2 is null||!_ready.Task.IsCompletedSuccessfully)return;_browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new{kind="config",settings=_store.Snapshot(),connected=_monitor.Connected,launchPending=_monitor.LaunchPending,status=_monitor.Status,featureStatus=_monitor.Features,feedback},SettingsStore.Json));}
+    {if(_browser.CoreWebView2 is null||!_ready.Task.IsCompletedSuccessfully)return;_browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new{kind="config",appVersion=Updates.AppVersion.Display,settings=_store.Snapshot(),connected=_monitor.Connected,launchPending=_monitor.LaunchPending,status=_monitor.Status,featureStatus=_monitor.Features,feedback},SettingsStore.Json));}
     private void Notice(string title,string text)=>_browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new{kind="notice",title,text},SettingsStore.Json));
     private void Receive(object? sender,CoreWebView2WebMessageReceivedEventArgs e)
     {

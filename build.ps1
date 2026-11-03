@@ -58,6 +58,8 @@ try{
     & $sdk publish lab.csproj -c Release -o $publish --nologo -p:NuGetAudit=false -p:DebugType=None -p:DebugSymbols=false -v:q
     if($LASTEXITCODE){throw 'LAB publish failed'}
     if($Test){
+        & $sdk run --project Tests/Updates/Updates.Tests.csproj -c Release -p:NuGetAudit=false --no-launch-profile
+        if($LASTEXITCODE){throw 'Update fixture checks failed'}
         & $sdk run --project Tests/Lab.Tests.csproj -c Release -p:NuGetAudit=false --no-launch-profile
         if($LASTEXITCODE){throw 'Native fixture checks failed'}
         Build-Native 'Tests/lighting_lifetime.cpp' 'Tests/output/lighting-lifetime.exe'

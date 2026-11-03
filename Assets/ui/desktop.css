@@ -1,5 +1,10 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111b22;color-scheme:dark}
 body,#lab-frost-layouts{font-family:LABUI}
+#lab-frost-layouts .lab-app-version{font-family:LABUI;font-weight:400;font-size:12px;line-height:1;white-space:nowrap;color:var(--lb-muted)}
+#lab-frost-layouts .lab-update .lab-content{display:flex;flex-direction:column;gap:22px;padding:18px 20px;overflow:auto}
+#lab-frost-layouts .lab-update h1{font-size:22px}
+#lab-frost-layouts .lab-update .lab-dialog-actions{margin-top:auto;gap:10px;flex-wrap:nowrap}
+#lab-frost-layouts .lab-update .lab-button{font-size:12px!important;min-height:34px;padding:8px 12px;white-space:nowrap}
 #lab-frost-layouts .lab-app{height:100vh;min-height:0}
 #lab-frost-layouts .lab-header,#lab-frost-layouts .lab-footer{flex-shrink:0}
 #lab-frost-layouts .lab-content{overflow:auto;min-height:0}

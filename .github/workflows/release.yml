@@ -33,7 +33,7 @@ jobs:
         run: |
           $version=([xml](Get-Content -LiteralPath lab.csproj -Raw)).Project.PropertyGroup.Version
           if($version -notmatch '^\d+\.\d+(?:\.\d+)?$'){throw 'Expected a two- or three-part release version.'}
-          if(!(Test-Path -LiteralPath "docs/release-$version.md")){throw 'Release notes are missing.'}
+          if(!(Test-Path -LiteralPath "docs/release-$version.txt")){throw 'Release notes are missing.'}
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Build and validate Windows package
         shell: pwsh
@@ -43,5 +43,5 @@ jobs:
         env:
           LAB_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "v$env:LAB_VERSION" artifacts/LAB.zip artifacts/LAB.zip.sha256 --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "LAB $env:LAB_VERSION" --notes-file "docs/release-$env:LAB_VERSION.md" --latest
+          gh release create "v$env:LAB_VERSION" artifacts/LAB.zip artifacts/LAB.zip.sha256 --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "LAB $env:LAB_VERSION" --notes-file "docs/release-$env:LAB_VERSION.txt" --latest
           if($LASTEXITCODE){throw 'Release publication failed.'}

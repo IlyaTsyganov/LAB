@@ -1,0 +1,9 @@
+LAB 1.1.1
+
+- Added a small application version label beside LAB, using EternalUi2Regular.
+- Added an optional startup check for newer stable GitHub releases, with a compact dialog in the LAB style.
+- Choose Yes, No, or Don't ask again for this version. Older versions remain usable, and offline starts show no update prompt.
+- Updates install into the folder from which LAB was launched, preserve preferences and logs, and restart LAB automatically.
+- Added download validation and recovery of previous files if installation fails.
+
+Extract the entire LAB.zip archive and run LAB/LAB.exe. Keep all included files together. Requires .NET 10 Desktop Runtime x64 and Microsoft Edge WebView2 Runtime.
