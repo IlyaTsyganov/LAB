@@ -42,15 +42,13 @@ Found a bug or have a suggestion? Open an [issue on GitHub](https://github.com/I
 
 ## Purpose & Disclaimer
 
-LAB is developed for educational, research and practice purposes, with a particular focus on understanding DOOM Eternal's game mechanics and improving speedrunning knowledge and techniques.
-
-The software is not intended to provide an unfair advantage over other players, facilitate cheating in competitive environments or interfere with the experience of other users.
+LAB is a utility for DOOM Eternal that provides movement information, visual customization and fixes for common gameplay issues.
 
 LAB is an independent, unofficial community project. The author does not claim ownership of DOOM Eternal or any associated trademarks, copyrights, game assets or other intellectual property. All respective rights remain with their original owners. No infringement of third-party rights is intended.
 
 LAB is not affiliated with, sponsored by or endorsed by id Software, Bethesda Softworks or their respective parent companies.
 
-**Use at your own risk.** The software is provided "as is", without warranties of any kind. The author assumes no responsibility for crashes, data loss, game instability, account restrictions or other consequences arising from its use, to the extent permitted by applicable law.
+**Use at your own risk.** The software is provided "as is", without warranties of any kind. The author assumes no responsibility for crashes, data loss, game instability or other consequences arising from its use, to the extent permitted by applicable law.
 
 Users are responsible for complying with applicable game and platform terms of service, as well as the rules of any speedrunning communities or events in which they participate.
 
